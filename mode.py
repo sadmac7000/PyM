@@ -58,20 +58,17 @@ def normal_mode_keys(key, buf, sline):
         buf.mode_changed()
         buf.move_to(buf.row, len(buf.lines[buf.row]))
 
-    if key == 'enter':
-        return buf.down_motion().execute()
-
 def motion_key(key, buf):
-    if key == 'h':
+    if (key == 'h') or (key == 'left'):
         return buf.left_motion()
 
-    if key == 'l':
+    if (key == 'l') or (key == 'right'):
         return buf.right_motion()
 
-    if key == 'k':
+    if (key == 'k') or (key == 'up'):
         return buf.up_motion()
 
-    if key == 'j':
+    if (key == 'j') or (key == 'down') or (key == 'enter'):
         return buf.down_motion()
 
 
