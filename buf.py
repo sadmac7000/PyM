@@ -8,6 +8,7 @@ class Motion():
 
     def execute(self):
         self.buf.move_to(*self.end)
+        self.buf.col_want = self.end[1]
 
     def ordered_coords(self):
         start = self.start
