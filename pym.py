@@ -18,18 +18,23 @@ class BufferDisplay(urwid.Widget):
         col = self.buf.col
         row = self.buf.row - self.scroll
 
+        if row > size[1] - scrolloff:
+            self.scroll += row - size[1] + scrolloff
+
+        if self.scroll + size[1] > len(self.buf.lines):
+            self.scroll = len(self.buf.lines) - size[1]
+
         if row < scrolloff:
-            self.scroll = self.buf.row - scrolloff
-            if self.scroll < 0:
-                self.scroll = 0
-            row = self.buf.row - self.scroll
-        elif row > size[1] - scrolloff:
-            self.scroll = self.buf.row - size[1] - scrolloff - 1
-            row = self.buf.row - self.scroll
+            self.scroll -= scrolloff - row
+
+        if self.scroll < 0:
+            self.scroll = 0
+
+        row = self.buf.row - self.scroll
         return (col,row)
 
     def render(self, size, **kwargs):
-        lines = [ x[:size[0]] for x in self.buf.encoded(self.scroll) ]
+        lines = [ x[:size[0]] for x in self.buf.encoded(self.scroll) ][:size[1]]
         attrs = [[]] * len(lines)
         if len(lines) < size[1]:
             attrs += [[('nonline', 1)]] * (size[1]-len(lines))
