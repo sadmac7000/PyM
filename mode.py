@@ -58,6 +58,9 @@ def normal_mode_keys(key, buf, sline):
         buf.mode_changed()
         buf.move_to(buf.row, len(buf.lines[buf.row]))
 
+    if key == 'enter':
+        return buf.down_motion().execute()
+
 def motion_key(key, buf):
     if key == 'h':
         return buf.left_motion()
@@ -71,6 +74,7 @@ def motion_key(key, buf):
     if key == 'j':
         return buf.down_motion()
 
+
 def delete_intercept(key, buf, sline):
     motion = motion_key(key,buf)
     if key == 'd':
@@ -78,6 +82,7 @@ def delete_intercept(key, buf, sline):
 
     if motion != None:
         motion.delete()
+
 
 _mode = normal = Mode(None, normal_mode_keys)
 normal.abort_mode = normal
