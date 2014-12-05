@@ -86,7 +86,7 @@ class Buffer():
 
         self.markers = {}
 
-    def mark(self, char):
+    def mark(self, char= "'"):
         self.markers[char] = (self.row, self.col)
 
     def restore_mark(self, char):
