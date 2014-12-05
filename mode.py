@@ -51,7 +51,7 @@ def normal_mode_keys(key, buf, sline):
     if key == 'a':
         _mode=insert
         buf.mode_changed()
-        buf.move_right()
+        buf.right_motion().execute()
 
     if key == 'A':
         _mode=insert
@@ -95,6 +95,6 @@ def insert_mode_keys(key, buf, sline):
         return
 
     buf.insert(key)
-    buf.move_right()
+    buf.right_motion().execute()
 
 insert = Mode(normal, insert_mode_keys, "-- INSERT --", insert=True)
