@@ -75,7 +75,9 @@ def delete_intercept(key, buf, sline):
     motion = motion_key(key,buf)
     if key == 'd':
         motion = buf.down_motion(0)
-    motion.delete()
+
+    if motion != None:
+        motion.delete()
 
 _mode = normal = Mode(None, normal_mode_keys)
 normal.abort_mode = normal
