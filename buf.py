@@ -98,12 +98,12 @@ class Buffer():
 
         row = start[0]
         col = start[1]
+        prepend = ""
 
         if row != end[0]:
-            self.lines[row] = self.lines[row][:col]
-            del self.lines[row + 1:end[0]]
-            row = end[0]
+            prepend = self.lines[row][:col]
+            del self.lines[row:end[0]]
             col = 0
 
         line = self.lines[row]
-        self.lines[row] = line[0:col] + line[end[1]:]
+        self.lines[row] = prepend + line[0:col] + line[end[1]:]
