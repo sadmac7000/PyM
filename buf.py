@@ -151,6 +151,16 @@ class Buffer():
         if col == None:
             col = self.col
 
-        line = self.lines[row]
-        self.lines[row] = line[:col] + data + line[col:]
-        self.lines[row:row+1] = self.lines[row].split('\n')
+        data = data.split('\n')
+        postfix = self.lines[row][col:]
+        self.lines[row] = self.lines[row][:col] + data.pop(0)
+        end_row = row
+
+        if len(data) > 0:
+            self.lines = self.lines[:row + 1] + data + self.lines[row + 1:]
+            end_row += len(data)
+
+        end_col = len(self.lines[end_row])
+        self.lines[end_row] += postfix
+
+        return Motion(self, (row,col), (end_row,end_col))

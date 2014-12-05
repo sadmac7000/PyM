@@ -96,8 +96,7 @@ def insert_mode_keys(key, buf, sline):
         return
 
     if key == 'enter':
-        buf.insert('\n')
-        buf.down_motion().execute()
+        buf.insert('\n').execute()
         return
 
     if len(key) > 1:
