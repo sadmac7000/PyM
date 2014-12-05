@@ -17,12 +17,15 @@ class Motion():
         if start[0] > end[0] or (start[0] == end[0] and start[1] > end[1]):
             tmp = start
             start = end
-            end = start
+            end = tmp
 
         return start, end
 
     def delete(self):
         start, end = self.ordered_coords()
+
+        if start != self.start:
+            self.execute()
 
         row = start[0]
         col = start[1]
