@@ -1,6 +1,6 @@
 import urwid
 from buf import Buffer
-from mode import mode
+from mode import mode, StatusLineBuf
 
 urwid.set_encoding("UTF-8")
 
@@ -44,6 +44,10 @@ class BufferDisplay(urwid.Widget):
                 self.scroll_pos = "Bot"
             else:
                 self.scroll_pos = "{}%".format(int(percent))
+
+        # We do this late so the scroll calculations still happen
+        if mode().focus != "buffer":
+            return None
         return (col,row)
 
     def render(self, size, **kwargs):
@@ -68,14 +72,30 @@ class Tabset(urwid.Widget):
 class StatusLine(urwid.Widget):
     _sizing=frozenset('flow')
 
+    def __init__(self):
+        super(urwid.Widget, self).__init__()
+        self.buf = StatusLineBuf()
+
     def rows(self, size, focus):
         return 1
 
+    def get_cursor_coords(self,size):
+        if mode().focus == 'sline':
+            return (self.buf.pos, 0)
+        return None
+
     def render(self, size, **kwargs):
-        content = b" " * size[0]
+        if mode().focus == 'sline':
+            content = self.buf.buf
+            content += " " * (size[0] - len(content))
+            content = content[:size[0]].encode()
+            return urwid.TextCanvas([content], [[]], maxcol=size[0],
+                    cursor=self.get_cursor_coords(size))
+        content = " " * size[0]
         label = mode().label
         content = label + content[len(label):]
-        content = content[:-4] + bdisp.scroll_pos.encode() + b" "
+        content = content[:-4] + bdisp.scroll_pos + " "
+        content = content.encode()
         if len(label):
             attr = [[('modelabel', len(label))]]
         else:
@@ -96,7 +116,7 @@ palette = [('tab', 'black,underline', 'light gray'),
         ('nonline', 'dark blue', '')]
 
 def do_input(key):
-    mode().handle_key(key, buf, sline)
+    mode().handle_key(key, buf, sline.buf)
     bdisp._invalidate()
     sline._invalidate()
 

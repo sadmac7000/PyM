@@ -1,18 +1,28 @@
 import urwid
 _mode = None
 
+class StatusLineBuf:
+    def __init__(self):
+        self.buf = ""
+        self.pos = 0
+
 def mode():
     return _mode
 
 class Mode():
     def __init__(self, abort_mode = mode, key_handler = None, label = "",
             focus="buffer", insert=False):
-        self.label = label.encode()
+        self.label = label
         self.key_handler = key_handler
         self.key_intercept = key_handler
         self.abort_mode = abort_mode
-        self.focus="buffer"
+        self.focus=focus
         self.insert = insert
+
+    def abort(self, buf):
+        global _mode
+        _mode = self.abort_mode
+        buf.mode_changed()
 
     def handle_key(self, key, buf, sline):
         global _mode
@@ -20,8 +30,7 @@ class Mode():
             if self.key_intercept != self.key_handler:
                 self.key_intercept = self.key_handler
             else:
-                _mode = self.abort_mode
-                buf.mode_changed()
+                self.abort(buf)
         elif self.key_handler != None:
             self.key_intercept = self.key_intercept(key, buf, sline)
             if self.key_intercept == None:
@@ -34,9 +43,6 @@ def normal_mode_keys(key, buf, sline):
     if motion != None:
         motion.execute()
         return
-
-    if key == 'q':
-        raise urwid.ExitMainLoop()
 
     if key == 'd':
         return delete_intercept
@@ -63,6 +69,12 @@ def normal_mode_keys(key, buf, sline):
 
     if key == '`' or key == "'":
         return mark_restore_intercept
+
+    if key == ':':
+        sline.buf = ':'
+        sline.pos = 1
+        _mode=excmd
+        buf.mode_changed()
 
 def mark_intercept(key, buf, sline):
     if len(key) > 1:
@@ -136,3 +148,32 @@ def insert_mode_keys(key, buf, sline):
     buf.right_motion().execute()
 
 insert = Mode(normal, insert_mode_keys, "-- INSERT --", insert=True)
+
+def excmd_mode_keys(key, buf, sline):
+    if key == 'backspace':
+        sline.pos -= 1
+        sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
+
+        if sline.pos == 0:
+            sline.buf = ""
+            _mode.abort(buf)
+        return
+
+    if key == 'delete':
+        sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
+        return
+
+    if key == 'enter':
+        if ":quit".startswith(sline.buf):
+            raise urwid.ExitMainLoop()
+        sline.buf = ""
+        _mode.abort(buf)
+        return
+
+    if len(key) > 1:
+        return
+
+    sline.buf = sline.buf[:sline.pos] + key + sline.buf[sline.pos:]
+    sline.pos += 1
+
+excmd = Mode(normal, excmd_mode_keys, '', 'sline')
