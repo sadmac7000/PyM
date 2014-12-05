@@ -58,7 +58,7 @@ class StatusLine(urwid.Widget):
         attr = ('modelabel', len(label))
         return urwid.TextCanvas([label], [[attr]], maxcol=size[0])
 
-buf=Buffer('/etc/fstab')
+buf=Buffer('pym.py')
 bdisp = BufferDisplay(buf)
 sline = StatusLine()
 tabset = Tabset()
