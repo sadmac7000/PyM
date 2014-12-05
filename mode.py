@@ -84,7 +84,7 @@ normal.abort_mode = normal
 
 def insert_mode_keys(key, buf, sline):
     if key == 'backspace':
-        if not buf.move_left():
+        if not buf.left_motion().execute():
             return
         buf.delete()
         return
