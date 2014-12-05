@@ -5,7 +5,7 @@ class Motion():
         self.start = start
         self.end = end
 
-    def exec(self, buf):
+    def execute(self, buf):
         buf.move_to(self.end)
 
     def ordered_coords(self):
