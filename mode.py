@@ -29,20 +29,17 @@ class Mode():
 
 def normal_mode_keys(key, buf, sline):
     global _mode
+    motion = motion_key(key, buf)
+
+    if motion != None:
+        motion.execute()
+        return
+
     if key == 'q':
         raise urwid.ExitMainLoop()
 
-    if key == 'h':
-        buf.move_left()
-
-    if key == 'l':
-        buf.move_right()
-
-    if key == 'k':
-        buf.move_up()
-
-    if key == 'j':
-        buf.move_down()
+    if key == 'd':
+        return delete_intercept
 
     if key == 'i':
         _mode=insert
@@ -61,12 +58,24 @@ def normal_mode_keys(key, buf, sline):
         buf.mode_changed()
         buf.move_to(buf.row, len(buf.lines[buf.row]))
 
-    if key == 'd':
-        return delete_intercept
+def motion_key(key, buf):
+    if key == 'h':
+        return buf.left_motion()
+
+    if key == 'l':
+        return buf.right_motion()
+
+    if key == 'k':
+        return buf.up_motion()
+
+    if key == 'j':
+        return buf.down_motion()
 
 def delete_intercept(key, buf, sline):
+    motion = motion_key(key,buf)
     if key == 'd':
-        buf.delete((buf.row,0),(buf.row+1,0))
+        motion = buf.down_motion(0)
+    motion.delete()
 
 _mode = normal = Mode(None, normal_mode_keys)
 normal.abort_mode = normal

@@ -1,25 +1,26 @@
 from mode import mode
 
 class Motion():
-    def __init__(self, start, end):
+    def __init__(self, buf, start, end):
         self.start = start
         self.end = end
+        self.buf = buf
 
-    def execute(self, buf):
-        buf.move_to(self.end)
+    def execute(self):
+        self.buf.move_to(*self.end)
 
     def ordered_coords(self):
         start = self.start
         end = self.end
 
-        if start[0] > end[0] || (start[0] == end[0] && start[1] > end[1]):
+        if start[0] > end[0] or (start[0] == end[0] and start[1] > end[1]):
             tmp = start
             start = end
             end = start
 
         return start, end
 
-    def delete(self, buf):
+    def delete(self):
         start, end = self.ordered_coords()
 
         row = start[0]
@@ -27,14 +28,14 @@ class Motion():
         prepend = ""
 
         if row != end[0]:
-            prepend = buf.lines[row][:col]
-            del buf.lines[row:end[0]]
+            prepend = self.buf.lines[row][:col]
+            del self.buf.lines[row:end[0]]
             col = 0
 
-        line = buf.lines[row]
-        buf.lines[row] = prepend + line[0:col] + line[end[1]:]
+        line = self.buf.lines[row]
+        self.buf.lines[row] = prepend + line[0:col] + line[end[1]:]
 
-    def get_text(self, buf):
+    def get_text(self):
         start, end = self.ordered_coords()
 
         row = start[0]
@@ -43,11 +44,23 @@ class Motion():
         ret = ""
 
         while row < end[0]:
-            ret += buf.lines[row][col:] + "\n"
+            ret += self.buf.lines[row][col:] + "\n"
             row += 1
             col = 0
 
-        return ret + buf.lines[row][col:end[1]]
+        return ret + self.buf.lines[row][col:end[1]]
+
+class LineMotion(Motion):
+    def __init__(self, buf, start, end):
+        if end >= start:
+            super(LineMotion, self).__init__(buf, (start,0),(end + 1, 0))
+        else:
+            super(LineMotion, self).__init__(buf,
+                    (start,len(buf.lines[start])),(end - 1, 0))
+        self.target = end
+
+    def execute(self):
+        self.buf.move_to(self.target, self.buf.col_want)
 
 class Buffer():
     def __init__(self, path = None):
@@ -95,8 +108,13 @@ class Buffer():
         if row >= len(self.lines):
             row = len(self.lines) - 1
 
-        if col > len(self.lines[row]):
-            col = len(self.lines[row]) - 1
+        if mode().insert and col > len(self.lines[row]) or (
+            not mode().insert and col >= len(self.lines[row])
+                ):
+            self.col_want = col
+            col = len(self.lines[row])
+            if not mode().insert:
+                col -= 1
 
         if (not mode().insert) and col == len(self.lines[row]):
             col = len(self.lines[row]) - 1
@@ -104,33 +122,17 @@ class Buffer():
         self.row = row
         self.col = col
 
-    def move_down(self):
-        if self.row >= len(self.lines) - 1:
-            return False
-        self.move_to(self.row + 1, self.col_want)
-        return True
+    def down_motion(self, count = 1):
+        return LineMotion(self, self.row, self.row + count)
 
-    def move_up(self):
-        if self.row == 0:
-            return False
-        self.move_to(self.row - 1, self.col_want)
-        return True
+    def up_motion(self, count = 1):
+        return LineMotion(self, self.row, self.row - count)
 
-    def move_left(self):
-        if self.col == 0:
-            return False
-        self.move_to(self.row, self.col - 1)
-        self.col_want = self.col
-        return True
+    def left_motion(self, count = 1):
+        return Motion(self, (self.row, self.col), (self.row,self.col - count))
 
-    def move_right(self):
-        if not mode().insert and self.col >= len(self.lines[self.row]) - 1:
-            return False
-        if self.col >= len(self.lines[self.row]):
-            return False
-        self.move_to(self.row, self.col + 1)
-        self.col_want = self.col
-        return True
+    def right_motion(self, count = 1):
+        return Motion(self, (self.row, self.col), (self.row,self.col + count))
 
     def insert(self, data, row=None, col=None):
         print(data)
@@ -142,21 +144,3 @@ class Buffer():
         line = self.lines[row]
         self.lines[row] = line[:col] + data + line[col:]
         self.lines[row:row+1] = self.lines[row].split('\n')
-
-    def delete(self, start = None, end = None):
-        if start == None:
-            start = (self.row, self.col)
-        if end == None:
-            end = (self.row, self.col + 1)
-
-        row = start[0]
-        col = start[1]
-        prepend = ""
-
-        if row != end[0]:
-            prepend = self.lines[row][:col]
-            del self.lines[row:end[0]]
-            col = 0
-
-        line = self.lines[row]
-        self.lines[row] = prepend + line[0:col] + line[end[1]:]
