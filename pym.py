@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+# Copyright © 2014, 2015 Casey Dahlin, John H. Dulaney
+#
+# this file is part of PyM.
+#
+# PyM is free software: you can redistribute it and/or modify it under the
+# terms of the gnu general public license as published by the free software
+# foundation, either version 3 of the license, or (at your option) any later
+# version.
+#
+# PyM is distributed in the hope that it will be useful, but without any
+# warranty; without even the implied warranty of merchantability or fitness for
+# a particular purpose.  see the gnu general public license for more details.
+#
+# you should have received a copy of the gnu general public license along with
+# PyM. if not, see <http://www.gnu.org/licenses/>.
+
 import urwid
 from buf import Buffer
 from mode import mode, StatusLineBuf
@@ -7,6 +24,7 @@ urwid.set_encoding("UTF-8")
 scrolloff = 5
 
 class BufferDisplay(urwid.Widget):
+    "Urwid widget for displaying a buffer's contents"
     _sizing=frozenset('box')
 
     def __init__(self, buf):
@@ -60,6 +78,7 @@ class BufferDisplay(urwid.Widget):
                 cursor=self.get_cursor_coords(size), maxcol=size[0])
 
 class Tabset(urwid.Widget):
+    "Urwid widget for the tab bar at the top of the screen"
     _sizing=frozenset('flow')
 
     def rows(self, size, focus):
@@ -70,6 +89,7 @@ class Tabset(urwid.Widget):
             size[0]-7)]], maxcol=size[0])
 
 class StatusLine(urwid.Widget):
+    "Urwid widget for the status line"
     _sizing=frozenset('flow')
 
     def __init__(self):
@@ -116,6 +136,7 @@ palette = [('tab', 'black,underline', 'light gray'),
         ('nonline', 'dark blue', '')]
 
 def do_input(key):
+    "Input line handling"
     mode().handle_key(key, buf, sline.buf)
     bdisp._invalidate()
     sline._invalidate()
