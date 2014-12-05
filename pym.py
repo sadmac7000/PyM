@@ -13,6 +13,7 @@ class BufferDisplay(urwid.Widget):
         super(urwid.Widget, self).__init__()
         self.buf = buf
         self.scroll = 0
+        self.scroll_pos = "All"
 
     def get_cursor_coords(self, size):
         col = self.buf.col
@@ -31,6 +32,18 @@ class BufferDisplay(urwid.Widget):
             self.scroll = 0
 
         row = self.buf.row - self.scroll
+
+        if size[1] >= len(self.buf.lines):
+            self.scroll_pos = "All"
+        else:
+            max_scroll = len(self.buf.lines) - size[1]
+            percent = self.scroll * 100 / max_scroll
+            if percent == 0:
+                self.scroll_pos = "Top"
+            elif percent == 100:
+                self.scroll_pos = "Bot"
+            else:
+                self.scroll_pos = "{}%".format(int(percent))
         return (col,row)
 
     def render(self, size, **kwargs):
@@ -59,9 +72,16 @@ class StatusLine(urwid.Widget):
         return 1
 
     def render(self, size, **kwargs):
+        content = b" " * size[0]
         label = mode().label
-        attr = ('modelabel', len(label))
-        return urwid.TextCanvas([label], [[attr]], maxcol=size[0])
+        content = label + content[len(label):]
+        content = content[:-4] + bdisp.scroll_pos.encode() + b" "
+        if len(label):
+            attr = [[('modelabel', len(label))]]
+        else:
+            attr = [[]]
+        canv = urwid.TextCanvas([content], attr, maxcol=size[0])
+        return canv
 
 buf=Buffer('pym.py')
 bdisp = BufferDisplay(buf)
