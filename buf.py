@@ -24,14 +24,15 @@ class Motion():
     def delete(self):
         start, end = self.ordered_coords()
 
-        if start != self.start:
-            self.execute()
-
         row = start[0]
         col = start[1]
+        if col < 0:
+            col = 0
+        if row < 0:
+            row = 0
         prepend = ""
 
-        if row != end[0]:
+        if row < end[0]:
             prepend = self.buf.lines[row][:col]
             del self.buf.lines[row:end[0]]
             col = 0
@@ -40,6 +41,10 @@ class Motion():
 
         line = self.buf.lines[row]
         self.buf.lines[row] = prepend + line[0:col] + line[end[1]:]
+        col = self.buf.col
+        if start != self.start:
+            self.execute()
+        self.buf.col_want = col
 
     def get_text(self):
         start, end = self.ordered_coords()
@@ -61,8 +66,8 @@ class LineMotion(Motion):
         if end >= start:
             super(LineMotion, self).__init__(buf, (start,0),(end + 1, 0))
         else:
-            super(LineMotion, self).__init__(buf,
-                    (start,len(buf.lines[start])),(end - 1, 0))
+            super(LineMotion, self).__init__(buf, (start+1,0),(end, 0))
+
         self.target = end
 
     def execute(self):
@@ -93,7 +98,7 @@ class Buffer():
                     line = line[:-1]
                 self.lines += [line]
         if len(self.lines) == 0:
-            self.lines = [b'']
+            self.lines = ['']
 
     def mode_changed(self):
         if mode().insert:
