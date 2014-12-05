@@ -1,5 +1,54 @@
 from mode import mode
 
+class Motion():
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+
+    def exec(self, buf):
+        buf.move_to(self.end)
+
+    def ordered_coords(self):
+        start = self.start
+        end = self.end
+
+        if start[0] > end[0] || (start[0] == end[0] && start[1] > end[1]):
+            tmp = start
+            start = end
+            end = start
+
+        return start, end
+
+    def delete(self, buf):
+        start, end = self.ordered_coords()
+
+        row = start[0]
+        col = start[1]
+        prepend = ""
+
+        if row != end[0]:
+            prepend = buf.lines[row][:col]
+            del buf.lines[row:end[0]]
+            col = 0
+
+        line = buf.lines[row]
+        buf.lines[row] = prepend + line[0:col] + line[end[1]:]
+
+    def get_text(self, buf):
+        start, end = self.ordered_coords()
+
+        row = start[0]
+        col = start[1]
+
+        ret = ""
+
+        while row < end[0]:
+            ret += buf.lines[row][col:] + "\n"
+            row += 1
+            col = 0
+
+        return ret + buf.lines[row][col:end[1]]
+
 class Buffer():
     def __init__(self, path = None):
         self.lines = [""]
