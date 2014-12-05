@@ -58,6 +58,33 @@ def normal_mode_keys(key, buf, sline):
         buf.mode_changed()
         buf.move_to(buf.row, len(buf.lines[buf.row]))
 
+    if key == 'm':
+        return mark_intercept
+
+    if key == '`' or key == "'":
+        return mark_restore_intercept
+
+def mark_intercept(key, buf, sline):
+    if len(key) > 1:
+        return
+
+    if not key in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'`0123456789":
+        return
+
+    if key == '`':
+        key = "'"
+
+    buf.mark(key)
+
+def mark_restore_intercept(key, buf, sline):
+    if len(key) > 1:
+        return
+
+    if key == '`':
+        key = "'"
+
+    buf.restore_mark(key)
+
 def motion_key(key, buf):
     if (key == 'h') or (key == 'left'):
         return buf.left_motion()

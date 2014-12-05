@@ -84,6 +84,17 @@ class Buffer():
         if path != None:
             self.loadfile(path)
 
+        self.markers = {}
+
+    def mark(self, char):
+        self.markers[char] = (self.row, self.col)
+
+    def restore_mark(self, char):
+        if char in self.markers:
+            self.move_to(*self.markers[char])
+            return True
+        return False
+
     def encoded(self, start = 0, end = None):
         if end == None:
             end = len(self.lines)
