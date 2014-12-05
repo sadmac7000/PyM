@@ -35,6 +35,8 @@ class Motion():
             prepend = self.buf.lines[row][:col]
             del self.buf.lines[row:end[0]]
             col = 0
+        if len(self.buf.lines) == 0:
+            self.buf.lines = ['']
 
         line = self.buf.lines[row]
         self.buf.lines[row] = prepend + line[0:col] + line[end[1]:]
