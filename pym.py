@@ -29,7 +29,7 @@ class BufferDisplay(urwid.Widget):
         return (col,row)
 
     def render(self, size, **kwargs):
-        lines = self.buf.lines[self.scroll:]
+        lines = self.buf.encoded(self.scroll)
         attrs = [[]] * len(lines)
         if len(lines) < size[1]:
             attrs += [[('nonline', 1)]] * (size[1]-len(lines))

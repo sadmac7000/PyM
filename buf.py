@@ -2,7 +2,7 @@ from mode import mode
 
 class Buffer():
     def __init__(self, path = None):
-        self.lines = [b""]
+        self.lines = [""]
         self.path = None
         self.row = 0
         self.col = 0
@@ -11,6 +11,11 @@ class Buffer():
         if path != None:
             self.loadfile(path)
 
+    def encoded(self, start = 0, end = None):
+        if end == None:
+            end = len(self.lines)
+        return [ x.encode() for x in self.lines[start:end] ]
+
     def loadfile(self, path):
         self.path = path
         self.lines = []
@@ -18,7 +23,7 @@ class Buffer():
             for line in f.readlines():
                 if line.endswith('\n'):
                     line = line[:-1]
-                self.lines += [line.encode()]
+                self.lines += [line]
         if len(self.lines) == 0:
             self.lines = [b'']
 
@@ -80,7 +85,6 @@ class Buffer():
 
     def insert(self, data, row=None, col=None):
         print(data)
-        data = data.encode()
         if row == None:
             row = self.row
         if col == None:
@@ -88,7 +92,7 @@ class Buffer():
 
         line = self.lines[row]
         self.lines[row] = line[:col] + data + line[col:]
-        self.lines[row:row+1] = self.lines[row].split(b'\n')
+        self.lines[row:row+1] = self.lines[row].split('\n')
 
     def delete(self, start = None, end = None):
         if start == None:
