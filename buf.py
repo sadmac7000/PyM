@@ -139,7 +139,6 @@ class Buffer():
         return Motion(self, (self.row, self.col), (self.row,self.col + count))
 
     def insert(self, data, row=None, col=None):
-        print(data)
         if row == None:
             row = self.row
         if col == None:
