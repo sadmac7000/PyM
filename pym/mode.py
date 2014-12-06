@@ -16,6 +16,7 @@
 # PyM. if not, see <http://www.gnu.org/licenses/>.
 
 import urwid
+import re
 
 _mode = None
 
@@ -40,22 +41,34 @@ class Mode():
     from the user. The abstract mode can be defined to do almost anything, but
     ESC always exits the mode (restoring the mode specified by the abort mode)
     """
-    def __init__(self, abort_mode, key_handler = None, label = "",
-            focus="buffer", insert=False):
+    def __init__(self, abort_mode, label = "",
+            focus="buffer", insert=False, tokenize_ints=False):
         self.label = label
-        self.key_handler = key_handler
-        self.key_intercept = key_handler
+        self.key_handlers = []
         self.abort_mode = abort_mode
         self.focus=focus
         self.insert = insert
+        self.key_tokens = []
+        self.tokenize_ints = tokenize_ints
 
     def abort(self, buf):
         """
         Exit this mode, return to its abort mode
         """
         global _mode
+        self.reset()
         _mode = self.abort_mode
         buf.mode_changed()
+
+    def reset(self):
+        """
+        Reset the key token buffer
+        """
+
+        if len(self.key_tokens):
+            self.key_tokens = []
+            return True
+        return False
 
     def handle_key(self, key, buf, sline):
         """
@@ -63,84 +76,110 @@ class Mode():
         """
         global _mode
         if key == 'esc':
-            if self.key_intercept != self.key_handler:
-                self.key_intercept = self.key_handler
-            else:
+            if not self.reset():
                 self.abort(buf)
-        elif self.key_handler != None:
-            self.key_intercept = self.key_intercept(key, buf, sline)
-            if self.key_intercept == None:
-                self.key_intercept= self.key_handler
+        elif self.tokenize_ints and re.match(r'[1-9]', key):
+            if len(self.key_tokens) > 0 and type(self.key_tokens[-1]) == int:
+                self.key_tokens[-1] *= 10
+                self.key_tokens[-1] += int(key)
+            else:
+                self.key_tokens += [int(key)]
+        elif key == '0' and type(self.key_tokens[-1]) == int:
+            self.key_tokens[-1] *= 10
+        else:
+            self.key_tokens += [key]
+            cont = False
+            for handler in self.key_handlers:
+                got = handler(self, buf, sline)
+                if got == "done":
+                    self.reset()
+                    return
+                elif got == "continue":
+                    cont = True
+            if not cont:
+                self.reset()
 
-def normal_mode_keys(key, buf, sline):
+    def register_handler(self, handler):
+        """
+        Register a new key handler with this mode
+        """
+        self.key_handlers += [handler]
+        return handler
+
+_mode = normal = Mode(None, tokenize_ints=True)
+normal.abort_mode = normal
+
+@normal.register_handler
+def normal_mode_keys(mode, buf, sline):
     """
     Key press handler for normal mode
     """
     global _mode
-    motion = motion_key(key, buf)
+    motion = motion_key(mode.key_tokens[0], buf)
 
     if motion != None:
         motion.execute()
-        return
+        return "done"
 
-    if key == 'd':
-        return delete_intercept
+    if mode.key_tokens[0] == 'd':
+        if len(mode.key_tokens) < 2:
+            return "continue"
 
-    if key == 'i':
+        motion = motion_key(mode.key_tokens[1], buf)
+        if mode.key_tokens[1] == 'd':
+            motion = buf.down_motion(0)
+        if motion != None:
+            motion.delete()
+        return "done"
+
+    if mode.key_tokens == ['i']:
         _mode=insert
         buf.mode_changed()
+        return "done"
 
-    if key == 'x':
-        buf.delete()
+    if mode.key_tokens == ['x']:
+        buf.right_motion().delete()
+        return "done"
 
-    if key == 'a':
+    if mode.key_tokens == ['a']:
         _mode=insert
         buf.mode_changed()
         buf.right_motion().execute()
+        return "done"
 
-    if key == 'A':
+    if mode.key_tokens == ['A']:
         _mode=insert
         buf.mode_changed()
         buf.move_to(buf.row, len(buf.lines[buf.row]))
+        return "done"
 
-    if key == 'm':
-        return mark_intercept
+    if mode.key_tokens[0] == 'm':
+        if len(mode.key_tokens) < 2:
+            return "continue"
+        key = mode.key_tokens[1]
+        if not key in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'`0123456789":
+            return "done"
 
-    if key == '`' or key == "'":
-        return mark_restore_intercept
+        if key == '`':
+            key = "'"
 
-    if key == ':':
+        buf.mark(key)
+
+        return "done"
+
+    if (mode.key_tokens[0] == "``" or mode.key_tokens[0] == "'"):
+        if len(mode.key_tokens) < 2:
+            return "continue"
+        buf.restore_mark(mode.key_tokens[1])
+
+    if mode.key_tokens[0] == ':':
         sline.buf = ':'
         sline.pos = 1
         _mode=excmd
         buf.mode_changed()
+        return "done"
 
-def mark_intercept(key, buf, sline):
-    """
-    Key press handler for recieving the name of the marker after the 'm' command.
-    """
-    if len(key) > 1:
-        return
-
-    if not key in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'`0123456789":
-        return
-
-    if key == '`':
-        key = "'"
-
-    buf.mark(key)
-
-def mark_restore_intercept(key, buf, sline):
-    """
-    Key press handler for recieving the name of the marker after the '`' command.
-    """
-    if len(key) > 1:
-        return
-
-    if key == '`':
-        key = "'"
-
-    buf.restore_mark(key)
+    return "done"
 
 def motion_key(key, buf):
     """
@@ -159,56 +198,50 @@ def motion_key(key, buf):
          or ((key == 'enter') and _mode == normal):
         return buf.down_motion()
 
+insert = Mode(normal, "-- INSERT --", insert=True)
 
-def delete_intercept(key, buf, sline):
-    """
-    Key press handler for obtaining the motion for the 'd' command
-    """
-    motion = motion_key(key,buf)
-    if key == 'd':
-        motion = buf.down_motion(0)
-
-    if motion != None:
-        motion.delete()
-
-
-_mode = normal = Mode(None, normal_mode_keys)
-normal.abort_mode = normal
-
-def insert_mode_keys(key, buf, sline):
+@insert.register_handler
+def insert_mode_keys(mode, buf, sline):
     """
     Handles keys in insert mode. For most renderable ASCII keys, this just
     inserts them in the buffer.
     """
+    key = mode.key_tokens[0]
+
     if key == 'backspace':
         buf.left_motion().delete()
+        return "done"
 
     if key == 'delete':
         buf.delete()
-        return
+        return "done"
 
     if key == 'enter':
         buf.insert('\n').execute()
-        return
+        return "done"
 
     motion = motion_key(key, buf)
     if motion != None:
         motion.execute()
-        return
+        return "done"
 
     if len(key) > 1:
-        return
+        return "done"
 
     buf.insert(key)
     buf.right_motion().execute()
+    return "done"
 
-insert = Mode(normal, insert_mode_keys, "-- INSERT --", insert=True)
+excmd = Mode(normal, '', 'sline')
 
-def excmd_mode_keys(key, buf, sline):
+@excmd.register_handler
+def excmd_mode_keys(mode, buf, sline):
     """
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.
     """
+    key = mode.key_tokens[0]
+
     if key == 'backspace':
         sline.pos -= 1
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
@@ -216,23 +249,22 @@ def excmd_mode_keys(key, buf, sline):
         if sline.pos == 0:
             sline.buf = ""
             _mode.abort(buf)
-        return
+        return "done"
 
     if key == 'delete':
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
-        return
+        return "done"
 
     if key == 'enter':
         if ":quit".startswith(sline.buf):
             raise urwid.ExitMainLoop()
         sline.buf = ""
         _mode.abort(buf)
-        return
+        return "done"
 
     if len(key) > 1:
-        return
+        return "done"
 
     sline.buf = sline.buf[:sline.pos] + key + sline.buf[sline.pos:]
     sline.pos += 1
-
-excmd = Mode(normal, excmd_mode_keys, '', 'sline')
+    return "done"
