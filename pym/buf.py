@@ -29,10 +29,16 @@ class Motion():
         self.buf = buf
 
     def execute(self):
+        """
+        Move the cursor to the end of this motion.
+        """
         self.buf.move_to(*self.end)
         self.buf.col_want = self.end[1]
 
     def ordered_coords(self):
+        """
+        Return the coordinates in order of increasing text position.
+        """
         start = self.start
         end = self.end
 
@@ -44,6 +50,9 @@ class Motion():
         return start, end
 
     def delete(self):
+        """
+        Delete the text passed over by this motion
+        """
         start, end = self.ordered_coords()
 
         row = start[0]
@@ -69,6 +78,9 @@ class Motion():
         self.buf.col_want = col
 
     def get_text(self):
+        """
+        Retrieve the text passed over by this motion
+        """
         start, end = self.ordered_coords()
 
         row = start[0]
