@@ -15,7 +15,7 @@
 # you should have received a copy of the gnu general public license along with
 # PyM. if not, see <http://www.gnu.org/licenses/>.
 
-from mode import mode
+from .mode import mode
 
 class Motion():
     """

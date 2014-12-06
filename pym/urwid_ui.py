@@ -16,8 +16,8 @@
 # PyM. if not, see <http://www.gnu.org/licenses/>.
 
 import urwid
-from buf import Buffer
-from mode import mode, StatusLineBuf
+from .buf import Buffer
+from .mode import mode, StatusLineBuf
 
 urwid.set_encoding("UTF-8")
 
@@ -123,7 +123,7 @@ class StatusLine(urwid.Widget):
         canv = urwid.TextCanvas([content], attr, maxcol=size[0])
         return canv
 
-buf=Buffer('pym.py')
+buf=Buffer('/etc/fstab')
 bdisp = BufferDisplay(buf)
 sline = StatusLine()
 tabset = Tabset()
@@ -141,6 +141,10 @@ def do_input(key):
     bdisp._invalidate()
     sline._invalidate()
 
-loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
-loop.screen.set_terminal_properties(colors=256)
-loop.run()
+def run():
+    """
+    Main looop for the Urwid UI
+    """
+    loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
+    loop.screen.set_terminal_properties(colors=256)
+    loop.run()
