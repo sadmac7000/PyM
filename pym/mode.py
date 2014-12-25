@@ -109,6 +109,38 @@ class Mode():
 _mode = normal = Mode(None, tokenize_ints=True)
 normal.abort_mode = normal
 
+def normal_key_params(mode):
+    if isinstance(mode.key_tokens[0], int):
+        arg = mode.key_tokens[0]
+        keys = mode.key_tokens[1:]
+    else:
+        arg = None
+        keys = mode.key_tokens
+    return arg, keys
+
+@normal.register_handler
+def normal_delete_key(mode, buf, sline):
+    arg, keys = normal_key_params(mode)
+
+    if keys[0] != 'd':
+        return 'skip'
+
+    if len(keys) < 2:
+        return "continue"
+
+    if arg and not isinstance(keys[1], int):
+        prepend = [arg]
+        count = arg - 1
+    else:
+        prepend = []
+        count = 0
+    motion = motion_key(prepend + keys[1:], buf)
+    if keys[1] == 'd':
+        motion = buf.down_motion(count)
+    if motion != None:
+        motion.delete()
+    return "done"
+
 @normal.register_handler
 def normal_mode_keys(mode, buf, sline):
     """
@@ -117,32 +149,10 @@ def normal_mode_keys(mode, buf, sline):
     global _mode
     motion = motion_key(mode.key_tokens, buf)
 
+    arg, keys = normal_key_params(mode)
+
     if motion != None:
         motion.execute()
-        return "done"
-
-    if isinstance(mode.key_tokens[0], int):
-        arg = mode.key_tokens[0]
-        keys = mode.key_tokens[1:]
-    else:
-        arg = None
-        keys = mode.key_tokens
-
-    if keys[0] == 'd':
-        if len(keys) < 2:
-            return "continue"
-
-        if arg and not isinstance(keys[1], int):
-            prepend = [arg]
-            count = arg - 1
-        else:
-            prepend = []
-            count = 0
-        motion = motion_key(prepend + keys[1:], buf)
-        if keys[1] == 'd':
-            motion = buf.down_motion(count)
-        if motion != None:
-            motion.delete()
         return "done"
 
     if keys == ['i']:
@@ -196,7 +206,7 @@ def normal_mode_keys(mode, buf, sline):
         buf.mode_changed()
         return "done"
 
-    return "done"
+    return "skip"
 
 def motion_key(keys, buf):
     """
