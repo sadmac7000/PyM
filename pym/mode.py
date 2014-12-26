@@ -84,7 +84,8 @@ class Mode():
                 self.key_tokens[-1] += int(key)
             else:
                 self.key_tokens += [int(key)]
-        elif key == '0' and type(self.key_tokens[-1]) == int:
+        elif self.tokenize_ints and key == '0' and \
+                type(self.key_tokens[-1]) == int:
             self.key_tokens[-1] *= 10
         else:
             self.key_tokens += [key]
@@ -110,6 +111,10 @@ _mode = normal = Mode(None, tokenize_ints=True)
 normal.abort_mode = normal
 
 def normal_key_params(mode):
+    """
+    Break down the key token buffer into an integer argument and a series of
+    keys.
+    """
     if isinstance(mode.key_tokens[0], int):
         arg = mode.key_tokens[0]
         keys = mode.key_tokens[1:]
@@ -120,10 +125,13 @@ def normal_key_params(mode):
 
 @normal.register_handler
 def normal_delete_key(mode, buf, sline):
+    """
+    Key press handler for `d` in normal mode
+    """
     arg, keys = normal_key_params(mode)
 
     if keys[0] != 'd':
-        return 'skip'
+        return
 
     if len(keys) < 2:
         return "continue"
@@ -142,31 +150,53 @@ def normal_delete_key(mode, buf, sline):
     return "done"
 
 @normal.register_handler
-def normal_mode_keys(mode, buf, sline):
+def normal_begin_insert(mode, buf, sline):
     """
-    Key press handler for normal mode
+    Key press handler for `i` in normal mode
     """
     global _mode
-    motion = motion_key(mode.key_tokens, buf)
 
     arg, keys = normal_key_params(mode)
-
-    if motion != None:
-        motion.execute()
-        return "done"
 
     if keys == ['i']:
         _mode=insert
         buf.mode_changed()
         return "done"
 
+@normal.register_handler
+def normal_mode_motion(mode, buf, sline):
+    """
+    Key press handler for motions in normal mode
+    """
+    motion = motion_key(mode.key_tokens, buf)
+
+    if motion != None:
+        motion.execute()
+        return "done"
+
+@normal.register_handler
+def normal_delchar_key(mode, buf, sline):
+    """
+    Key press handler for `x` in normal mode
+    """
+    arg, keys = normal_key_params(mode)
+
     if keys == ['x']:
+        print("hi")
         if arg:
             count = arg
         else:
-            count = 0
+            count = 1
         buf.right_motion(count).delete()
         return "done"
+
+@normal.register_handler
+def normal_mode_insert_after(mode, buf, sline):
+    """
+    Key press handler for `a` in normal mode
+    """
+    global _mode
+    arg, keys = normal_key_params(mode)
 
     if keys == ['a']:
         _mode=insert
@@ -174,11 +204,26 @@ def normal_mode_keys(mode, buf, sline):
         buf.right_motion().execute()
         return "done"
 
+@normal.register_handler
+def normal_mode_insert_at_end(mode, buf, sline):
+    """
+    Key press handler for `A` in normal mode
+    """
+    global _mode
+    arg, keys = normal_key_params(mode)
+
     if keys == ['A']:
         _mode=insert
         buf.mode_changed()
         buf.move_to(buf.row, len(buf.lines[buf.row]))
         return "done"
+
+@normal.register_handler
+def normal_mode_mark(mode, buf, sline):
+    """
+    Key press handler for `m` in normal mode
+    """
+    arg, keys = normal_key_params(mode)
 
     if keys[0] == 'm':
         if len(keys) < 2:
@@ -194,10 +239,26 @@ def normal_mode_keys(mode, buf, sline):
 
         return "done"
 
+@normal.register_handler
+def normal_mode_goto(mode, buf, sline):
+    """
+    Key press handler for '`' in normal mode
+    """
+    global _mode
+    arg, keys = normal_key_params(mode)
+
     if (keys[0] == "``" or keys[0] == "'"):
         if len(keys) < 2:
             return "continue"
         buf.restore_mark(mode.key_tokens[1])
+
+@normal.register_handler
+def normal_mode_cmdmode(mode, buf, sline):
+    """
+    Key press handler for `:` in normal mode
+    """
+    global _mode
+    arg, keys = normal_key_params(mode)
 
     if keys[0] == ':':
         sline.buf = ':'
@@ -206,7 +267,7 @@ def normal_mode_keys(mode, buf, sline):
         buf.mode_changed()
         return "done"
 
-    return "skip"
+    return
 
 def motion_key(keys, buf):
     """
