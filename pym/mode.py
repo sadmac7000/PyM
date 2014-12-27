@@ -29,10 +29,15 @@ class StatusLineBuf:
         self.buf = ""
         self.pos = 0
 
-def mode():
+def mode(newmode = None):
     """
     Get the current PyM mode
     """
+    global _mode
+
+    if newmode != None:
+        _mode = newmode
+
     return _mode
 
 class Mode():
@@ -108,198 +113,10 @@ class Mode():
         return handler
 
 _mode = normal = Mode(None, tokenize_ints=True)
-normal.abort_mode = normal
-
-def normal_key_params(mode):
-    """
-    Break down the key token buffer into an integer argument and a series of
-    keys.
-    """
-    if isinstance(mode.key_tokens[0], int):
-        arg = mode.key_tokens[0]
-        keys = mode.key_tokens[1:]
-    else:
-        arg = None
-        keys = mode.key_tokens
-    return arg, keys
-
-@normal.register_handler
-def normal_delete_key(mode, buf, sline):
-    """
-    Key press handler for `d` in normal mode
-    """
-    arg, keys = normal_key_params(mode)
-
-    if keys[0] != 'd':
-        return
-
-    if len(keys) < 2:
-        return "continue"
-
-    if arg and not isinstance(keys[1], int):
-        prepend = [arg]
-        count = arg - 1
-    else:
-        prepend = []
-        count = 0
-    motion = motion_key(prepend + keys[1:], buf)
-    if keys[1] == 'd':
-        motion = buf.down_motion(count)
-    if motion != None:
-        motion.delete()
-    return "done"
-
-@normal.register_handler
-def normal_begin_insert(mode, buf, sline):
-    """
-    Key press handler for `i` in normal mode
-    """
-    global _mode
-
-    arg, keys = normal_key_params(mode)
-
-    if keys == ['i']:
-        _mode=insert
-        buf.mode_changed()
-        return "done"
-
-@normal.register_handler
-def normal_mode_motion(mode, buf, sline):
-    """
-    Key press handler for motions in normal mode
-    """
-    motion = motion_key(mode.key_tokens, buf)
-
-    if motion != None:
-        motion.execute()
-        return "done"
-
-@normal.register_handler
-def normal_delchar_key(mode, buf, sline):
-    """
-    Key press handler for `x` in normal mode
-    """
-    arg, keys = normal_key_params(mode)
-
-    if keys == ['x']:
-        print("hi")
-        if arg:
-            count = arg
-        else:
-            count = 1
-        buf.right_motion(count).delete()
-        return "done"
-
-@normal.register_handler
-def normal_mode_insert_after(mode, buf, sline):
-    """
-    Key press handler for `a` in normal mode
-    """
-    global _mode
-    arg, keys = normal_key_params(mode)
-
-    if keys == ['a']:
-        _mode=insert
-        buf.mode_changed()
-        buf.right_motion().execute()
-        return "done"
-
-@normal.register_handler
-def normal_mode_insert_at_end(mode, buf, sline):
-    """
-    Key press handler for `A` in normal mode
-    """
-    global _mode
-    arg, keys = normal_key_params(mode)
-
-    if keys == ['A']:
-        _mode=insert
-        buf.mode_changed()
-        buf.move_to(buf.row, len(buf.lines[buf.row]))
-        return "done"
-
-@normal.register_handler
-def normal_mode_mark(mode, buf, sline):
-    """
-    Key press handler for `m` in normal mode
-    """
-    arg, keys = normal_key_params(mode)
-
-    if keys[0] == 'm':
-        if len(keys) < 2:
-            return "continue"
-        key = keys[1]
-        if not key in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'`0123456789":
-            return "done"
-
-        if key == '`':
-            key = "'"
-
-        buf.mark(key)
-
-        return "done"
-
-@normal.register_handler
-def normal_mode_goto(mode, buf, sline):
-    """
-    Key press handler for '`' in normal mode
-    """
-    global _mode
-    arg, keys = normal_key_params(mode)
-
-    if (keys[0] == "``" or keys[0] == "'"):
-        if len(keys) < 2:
-            return "continue"
-        buf.restore_mark(mode.key_tokens[1])
-
-@normal.register_handler
-def normal_mode_cmdmode(mode, buf, sline):
-    """
-    Key press handler for `:` in normal mode
-    """
-    global _mode
-    arg, keys = normal_key_params(mode)
-
-    if keys[0] == ':':
-        sline.buf = ':'
-        sline.pos = 1
-        _mode=excmd
-        buf.mode_changed()
-        return "done"
-
-    return
-
-def motion_key(keys, buf):
-    """
-    Generic key press receiver for motion keys
-    """
-
-    if len(keys) > 2:
-        return
-
-    if isinstance(keys[0], int):
-        if len(keys) < 2:
-            return
-        key = keys[1]
-        amt = keys[0]
-    else:
-        key = keys[0]
-        amt = 1
-
-    if ((key == 'h') and _mode == normal) or (key == 'left'):
-        return buf.left_motion(amt)
-
-    if ((key == 'l') and _mode == normal) or (key == 'right'):
-        return buf.right_motion(amt)
-
-    if ((key == 'k') and _mode == normal) or (key == 'up'):
-        return buf.up_motion(amt)
-
-    if ((key == 'j') and _mode == normal) or (key == 'down') \
-         or ((key == 'enter') and _mode == normal):
-        return buf.down_motion(amt)
-
 insert = Mode(normal, "-- INSERT --", insert=True)
+excmd = Mode(normal, '', 'sline')
+
+normal.abort_mode = normal
 
 @insert.register_handler
 def insert_mode_keys(mode, buf, sline):
@@ -321,9 +138,20 @@ def insert_mode_keys(mode, buf, sline):
         buf.insert('\n').execute()
         return "done"
 
-    motion = motion_key(key, buf)
-    if motion != None:
-        motion.execute()
+    if key == 'left':
+        buf.left_motion().execute()
+        return "done"
+
+    if key == 'right':
+        buf.right_motion(amt).execute()
+        return "done"
+
+    if key == 'up':
+        buf.up_motion(amt).execute()
+        return "done"
+
+    if key == 'down':
+        buf.down_motion(amt).execute()
         return "done"
 
     if len(key) > 1:
@@ -332,8 +160,6 @@ def insert_mode_keys(mode, buf, sline):
     buf.insert(key)
     buf.right_motion().execute()
     return "done"
-
-excmd = Mode(normal, '', 'sline')
 
 @excmd.register_handler
 def excmd_mode_keys(mode, buf, sline):

@@ -18,6 +18,7 @@
 import urwid
 from .buf import Buffer
 from .mode import mode, StatusLineBuf
+from .normal_mode import *
 
 urwid.set_encoding("UTF-8")
 
