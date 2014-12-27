@@ -143,15 +143,15 @@ def insert_mode_keys(mode, buf, sline):
         return "done"
 
     if key == 'right':
-        buf.right_motion(amt).execute()
+        buf.right_motion().execute()
         return "done"
 
     if key == 'up':
-        buf.up_motion(amt).execute()
+        buf.up_motion().execute()
         return "done"
 
     if key == 'down':
-        buf.down_motion(amt).execute()
+        buf.down_motion().execute()
         return "done"
 
     if len(key) > 1:
