@@ -184,7 +184,7 @@ def excmd_mode_keys(mode, buf, sline):
 
     if key == 'enter':
         if ":quit".startswith(sline.buf):
-            raise ui().quit()
+            ui().quit()
         sline.buf = ""
         _mode.abort(buf)
         return "done"
