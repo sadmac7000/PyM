@@ -16,9 +16,20 @@
 # PyM. if not, see <http://www.gnu.org/licenses/>.
 
 import urwid
+from .ui_core import ui, UI
 from .buf import Buffer
 from .mode import mode, StatusLineBuf
 from .normal_mode import *
+
+class UrwidUI(UI):
+    """
+    The Urwid UI class
+    """
+
+    def quit(self):
+        raise urwid.ExitMainLoop()
+
+ui(UrwidUI())
 
 urwid.set_encoding("UTF-8")
 

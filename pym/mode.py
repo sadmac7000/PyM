@@ -15,7 +15,7 @@
 # you should have received a copy of the gnu general public license along with
 # PyM. if not, see <http://www.gnu.org/licenses/>.
 
-import urwid
+from .ui_core import ui
 import re
 
 _mode = None
@@ -184,7 +184,7 @@ def excmd_mode_keys(mode, buf, sline):
 
     if key == 'enter':
         if ":quit".startswith(sline.buf):
-            raise urwid.ExitMainLoop()
+            raise ui().quit()
         sline.buf = ""
         _mode.abort(buf)
         return "done"
