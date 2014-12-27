@@ -189,6 +189,16 @@ def excmd_mode_keys(mode, buf, sline):
         _mode.abort(buf)
         return "done"
 
+    if key == 'left':
+        sline.pos -= 1
+        if sline.pos < 1:
+            sline.pos = 1
+
+    if key == 'right':
+        sline.pos += 1
+        if sline.pos > len(sline.buf):
+            sline.pos = len(sline.buf)
+
     if len(key) > 1:
         return "done"
 
