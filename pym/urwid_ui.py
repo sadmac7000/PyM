@@ -19,10 +19,11 @@ import urwid
 from .ui_core import ui, UI
 from .buf import Buffer
 from .mode import mode, StatusLineBuf, normal
-from .normal_mode import *
-from .commands import *
-
+import importlib
 import signal
+
+importlib.import_module(".commands", "pym")
+importlib.import_module(".normal_mode", "pym")
 
 def sigint(*args):
     do_input("ctrl c")
