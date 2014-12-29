@@ -71,11 +71,15 @@ class Motion():
         if len(self.buf.lines) == 0:
             self.buf.lines = ['']
 
+        if row >= len(self.buf.lines):
+            row = len(self.buf.lines) - 1
         line = self.buf.lines[row]
         self.buf.lines[row] = prepend + line[0:col] + line[end[1]:]
         col = self.buf.col
         if start != self.start:
             self.execute()
+        else:
+            self.buf.move_to(*start)
         self.buf.col_want = col
         self.buf.dirty = True
 
