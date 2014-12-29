@@ -24,3 +24,8 @@ def quitcmd(args, sline, buf):
     ui().notify("Trailing characters", error=True)
 
 ExCommand("quit", quitcmd)
+
+def editcmd(args, sline, buf):
+    buf.loadfile(args)
+
+ExCommand("edit", editcmd)
