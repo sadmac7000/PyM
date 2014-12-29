@@ -21,6 +21,14 @@ from .buf import Buffer
 from .mode import mode, StatusLineBuf, normal
 from .normal_mode import *
 
+import signal
+
+def sigint(*args):
+    do_input("ctrl c")
+    loop.draw_screen()
+
+signal.signal(signal.SIGINT, sigint)
+
 status_msg = None
 status_err = False
 
@@ -186,10 +194,11 @@ def do_input(key):
     sline._invalidate()
     tabset._invalidate()
 
+loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
+
 def run():
     """
     Main looop for the Urwid UI
     """
-    loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
     loop.screen.set_terminal_properties(colors=256)
     loop.run()
