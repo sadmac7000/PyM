@@ -16,6 +16,7 @@
 # PyM. if not, see <http://www.gnu.org/licenses/>.
 
 from .mode import mode
+import os
 
 class Motion():
     """
@@ -159,7 +160,7 @@ class Buffer():
         Replace the contents of this buffer with the contents of the file at
         the given path.
         """
-        self.path = path
+        self.path = os.path.abspath(path)
         self.lines = []
         with open(path, 'r') as f:
             for line in f.readlines():
