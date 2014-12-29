@@ -129,6 +129,11 @@ class Buffer():
 
         self.markers = {}
 
+    def headline(self):
+        if self.path == None:
+            return "[No Name]"
+        return os.path.relpath(self.path)
+
     def mark(self, char= "'"):
         """
         Store a mark position which can be returned to. We use the current

@@ -185,6 +185,7 @@ def excmd_mode_keys(mode, buf, sline):
     if key == 'enter':
         if ":quit".startswith(sline.buf):
             ui().quit()
+        ui().notify("Not an editor command", error=True)
         sline.buf = ""
         _mode.abort(buf)
         return "done"

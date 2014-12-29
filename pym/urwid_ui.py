@@ -18,8 +18,11 @@
 import urwid
 from .ui_core import ui, UI
 from .buf import Buffer
-from .mode import mode, StatusLineBuf
+from .mode import mode, StatusLineBuf, normal
 from .normal_mode import *
+
+status_msg = None
+status_err = False
 
 class UrwidUI(UI):
     """
@@ -28,6 +31,12 @@ class UrwidUI(UI):
 
     def quit(self):
         raise urwid.ExitMainLoop()
+
+    def notify(self, message, error=False):
+        global status_msg
+        global status_err
+        status_msg = message
+        status_err = error
 
 ui(UrwidUI())
 
@@ -49,6 +58,9 @@ class BufferDisplay(urwid.Widget):
         col = self.buf.col
         row = self.buf.row - self.scroll
 
+        global status_msg
+        old_scroll = self.scroll
+
         if row > size[1] - scrolloff:
             self.scroll += row - size[1] + scrolloff
 
@@ -60,6 +72,9 @@ class BufferDisplay(urwid.Widget):
 
         if self.scroll < 0:
             self.scroll = 0
+
+        if self.scroll != old_scroll:
+            status_msg = None
 
         row = self.buf.row - self.scroll
 
@@ -97,8 +112,11 @@ class Tabset(urwid.Widget):
         return 1
 
     def render(self, size, **kwargs):
-        return urwid.TextCanvas([b"Unnamed"], [[('tab', 7), ('tabspace',
-            size[0]-7)]], maxcol=size[0])
+        global buf
+        contents = (" " + buf.headline() + " ").encode()
+        sz = len(contents)
+        return urwid.TextCanvas([contents], [[('tab', sz), ('tabspace',
+            size[0]-sz)]], maxcol=size[0])
 
 class StatusLine(urwid.Widget):
     "Urwid widget for the status line"
@@ -117,6 +135,9 @@ class StatusLine(urwid.Widget):
         return None
 
     def render(self, size, **kwargs):
+        global status_msg
+        global status_err
+
         if mode().focus == 'sline':
             content = self.buf.buf
             content += " " * (size[0] - len(content))
@@ -124,18 +145,28 @@ class StatusLine(urwid.Widget):
             return urwid.TextCanvas([content], [[]], maxcol=size[0],
                     cursor=self.get_cursor_coords(size))
         content = " " * size[0]
-        label = mode().label
+        if mode() != normal:
+            status_msg = None
+        if status_msg != None:
+            label = status_msg
+        else:
+            label = mode().label
         content = label + content[len(label):]
         content = content[:-4] + bdisp.scroll_pos + " "
         content = content.encode()
         if len(label):
-            attr = [[('modelabel', len(label))]]
+            if status_msg == None:
+                attr = [[('modelabel', len(label))]]
+            elif status_err:
+                attr = [[('errlabel', len(label))]]
+            else:
+                attr = [[]]
         else:
             attr = [[]]
         canv = urwid.TextCanvas([content], attr, maxcol=size[0])
         return canv
 
-buf=Buffer('/etc/fstab')
+buf=Buffer()
 bdisp = BufferDisplay(buf)
 sline = StatusLine()
 tabset = Tabset()
@@ -145,6 +176,7 @@ layout = urwid.Pile([(1,tabset),bdisp,(1,sline)])
 palette = [('tab', 'black,underline', 'light gray'),
         ('tabspace', 'black', 'light gray', '', 'h8', 'g74'),
         ('modelabel', 'white,bold', ''),
+        ('errlabel', 'white,bold', 'dark red'),
         ('nonline', 'dark blue', '')]
 
 def do_input(key):
