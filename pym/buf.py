@@ -178,8 +178,15 @@ class Buffer():
         the given path.
         """
         self.path = os.path.abspath(path)
+
         self.lines = []
         self.dirty = False
+
+        if not os.path.exists(self.path):
+            #TODO: Notify if the directory isn't there either
+            self.lines = ['']
+            return
+
         with open(path, 'r') as f:
             for line in f.readlines():
                 if line.endswith('\n'):
@@ -187,6 +194,18 @@ class Buffer():
                 self.lines += [line]
         if len(self.lines) == 0:
             self.lines = ['']
+
+    def writefile(self, path = None):
+        if path == None:
+            path = self.path
+
+        #TODO: If the path is still None?
+
+        with open(path, "wb") as f:
+            f.write(("\n".join(self.lines)+"\n").encode())
+
+        if os.path.samefile(path, self.path):
+            self.dirty = False
 
     def mode_changed(self):
         """

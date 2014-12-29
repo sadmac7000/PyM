@@ -110,7 +110,7 @@ class BufferDisplay(urwid.Widget):
         if len(lines) < size[1]:
             attrs += [[('nonline', 1)]] * (size[1]-len(lines))
             lines += [b"~"] * (size[1]-len(lines))
-        return urwid.TextCanvas(lines, attrs,
+        return urwid.TextCanvas(lines, None,
                 cursor=self.get_cursor_coords(size), maxcol=size[0])
 
 class Tabset(urwid.Widget):

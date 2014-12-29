@@ -29,3 +29,8 @@ def editcmd(args, sline, buf):
     buf.loadfile(args)
 
 ExCommand("edit", editcmd)
+
+def writecmd(args, sline, buf):
+    buf.writefile(args)
+
+ExCommand("write", writecmd)
