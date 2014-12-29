@@ -214,6 +214,8 @@ def excmd_mode_keys(mode, buf, sline):
             sline.pos = len(sline.buf)
 
     if len(key) > 1:
+        sline.buf = ""
+        _mode.abort(buf)
         return "done"
 
     sline.buf = sline.buf[:sline.pos] + key + sline.buf[sline.pos:]
