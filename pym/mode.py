@@ -222,15 +222,42 @@ def excmd_mode_keys(mode, buf, sline):
     sline.pos += 1
     return "done"
 
+excmds = {}
+
+class ExCommand(object):
+    def __init__(self, name, run, tab_complete = None):
+        global excmds
+
+        self.tab_complete = tab_complete
+        self.run = run
+        self.name = name
+
+        if name in excmds and excmds[name].name == name:
+            excmds[name] = self
+            return
+
+        preflen = 1
+
+        for k in excmds.keys():
+            if name.startswith(k):
+                del excmds[k]
+                if len(k) >= preflen:
+                    preflen = len(k) + 1
+
+        while preflen <= len(name):
+            excmds[name[:preflen]] = self
+            preflen += 1
+
+    def __call__(self, *args, **kwargs):
+        self.run(*args, **kwargs)
+
 def do_excmd(cmd, args, sline, buf):
     """
     Process a command
     """
-    if "quit".startswith(cmd):
-        if args == None:
-            ui().quit()
-        ui().notify("Trailing characters", error=True)
-        sline.buf = ""
-        _mode.abort(buf)
-        return True
-    return False
+
+    if not cmd in excmds:
+        return False
+
+    excmds[cmd](args, sline, buf)
+    return True

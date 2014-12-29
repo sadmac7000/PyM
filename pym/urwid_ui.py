@@ -20,6 +20,7 @@ from .ui_core import ui, UI
 from .buf import Buffer
 from .mode import mode, StatusLineBuf, normal
 from .normal_mode import *
+from .commands import *
 
 import signal
 
