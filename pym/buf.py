@@ -77,6 +77,7 @@ class Motion():
         if start != self.start:
             self.execute()
         self.buf.col_want = col
+        self.buf.dirty = True
 
     def get_text(self):
         """
@@ -123,6 +124,7 @@ class Buffer():
         self.row = 0
         self.col = 0
         self.col_want = 0
+        self.dirty = False
 
         if path != None:
             self.loadfile(path)
@@ -130,9 +132,15 @@ class Buffer():
         self.markers = {}
 
     def headline(self):
+        if self.dirty:
+            dirty_marker = "+ "
+        else:
+            dirty_marker = ""
+
         if self.path == None:
-            return "[No Name]"
-        return os.path.relpath(self.path)
+            return dirty_marker + "[No Name]"
+
+        return dirty_marker + os.path.relpath(self.path)
 
     def mark(self, char= "'"):
         """
@@ -167,6 +175,7 @@ class Buffer():
         """
         self.path = os.path.abspath(path)
         self.lines = []
+        self.dirty = False
         with open(path, 'r') as f:
             for line in f.readlines():
                 if line.endswith('\n'):
@@ -261,5 +270,6 @@ class Buffer():
 
         end_col = len(self.lines[end_row])
         self.lines[end_row] += postfix
+        self.dirty = True
 
         return Motion(self, (row,col), (end_row,end_col))

@@ -184,6 +184,7 @@ def do_input(key):
     mode().handle_key(key, buf, sline.buf)
     bdisp._invalidate()
     sline._invalidate()
+    tabset._invalidate()
 
 def run():
     """
