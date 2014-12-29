@@ -183,9 +183,22 @@ def excmd_mode_keys(mode, buf, sline):
         return "done"
 
     if key == 'enter':
-        if ":quit".startswith(sline.buf):
-            ui().quit()
-        ui().notify("Not an editor command", error=True)
+        data = sline.buf[1:].strip()
+
+        if len(data) == 0:
+            sline.buf = ""
+            _mode.abort(buf)
+            return "done"
+
+        data = data.split(None, 1)
+        cmd = data[0]
+        if len(data) > 1:
+            args = data[1]
+        else:
+            args = None
+
+        if not do_excmd(cmd, args, sline, buf):
+            ui().notify("Not an editor command: " + cmd, error=True)
         sline.buf = ""
         _mode.abort(buf)
         return "done"
@@ -206,3 +219,16 @@ def excmd_mode_keys(mode, buf, sline):
     sline.buf = sline.buf[:sline.pos] + key + sline.buf[sline.pos:]
     sline.pos += 1
     return "done"
+
+def do_excmd(cmd, args, sline, buf):
+    """
+    Process a command
+    """
+    if "quit".startswith(cmd):
+        if args == None:
+            ui().quit()
+        ui().notify("Trailing characters", error=True)
+        sline.buf = ""
+        _mode.abort(buf)
+        return True
+    return False
