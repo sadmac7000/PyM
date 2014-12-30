@@ -17,6 +17,17 @@
 
 from .mode import excommand
 from .ui import ui
+from .buf import NoFileNameError
+from glob import glob
+import os
+
+def file_tab_complete(string):
+    def slashed_path(path):
+        if os.path.isdir(path):
+            return path + '/'
+        else:
+            return path + ' '
+    return [ slashed_path(x) for x in glob(string + '*') ]
 
 @excommand("quit")
 def quitcmd(args):
@@ -24,7 +35,7 @@ def quitcmd(args):
         ui().quit()
     ui().notify("Trailing characters", error=True)
 
-@excommand("edit")
+@excommand("edit", file_tab_complete)
 def editcmd(args):
     try:
         ui().buf.loadfile(args)
@@ -33,7 +44,7 @@ def editcmd(args):
     except PermissionError:
         ui().notify("Permission denied", error=True)
 
-@excommand("write")
+@excommand("write", file_tab_complete)
 def writecmd(args):
     try:
         ui().buf.writefile(args)

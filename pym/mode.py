@@ -18,6 +18,7 @@
 from .ui import ui
 from .key_parse import parse_key_expr
 import re
+import os
 
 class StatusLineBuf:
     """
@@ -136,7 +137,63 @@ def insert_mode_keys(key):
     else:
         buf.insert(key).execute()
 
-excmd_pattern = re.compile('([a-zA-Z_][a-zA-Z0-9_]*)(.*)')
+excmd_pattern = re.compile('([a-zA-Z_][a-zA-Z0-9_]*)\s*(.*)')
+
+@excmd.handle('<tab>')
+def excmd_tab_complete(key):
+    """
+    Tab completion for command mode
+    """
+    global excmds
+
+    sline = ui().sline
+    data = sline.buf[1:sline.pos].lstrip()
+
+    if len(data) == 0:
+        return
+
+    match = re.match(excmd_pattern, data)
+
+    if match == None:
+        return
+
+    cmd, args = match.groups()
+
+    if len(args) > 0:
+        if cmd not in excmds:
+            return
+        new_args = excmds[cmd].tab_complete(args)
+
+        if len(new_args) == 0:
+            return
+
+        new_args = os.path.commonprefix(new_args)[len(args):]
+        sline.buf = sline.buf[:sline.pos] + new_args + sline.buf[sline.pos:]
+        sline.pos += len(new_args)
+
+@excmd.handle('<enter>')
+def excmd_parse_exec(key):
+    sline = ui().sline
+    data = sline.buf[1:].strip()
+
+    if len(data) == 0:
+        sline.buf = ""
+        mode().abort()
+        return
+
+    match = re.match(excmd_pattern, data)
+
+    if match != None:
+        cmd, args = match.groups()
+        if len(args) == 0:
+            args = None
+        if not do_excmd(cmd, args):
+            ui().notify("Not an editor command: " + cmd, error=True)
+    else:
+        ui().notify("Malformed command: " + data, error=True)
+    sline.buf = ""
+    mode().abort()
+    return
 
 @excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
 def excmd_mode_keys(key):
@@ -144,7 +201,6 @@ def excmd_mode_keys(key):
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.
     """
-
     sline = ui().sline
 
     if key == 'backspace':
@@ -156,27 +212,6 @@ def excmd_mode_keys(key):
             mode().abort()
     elif key == 'delete':
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
-    elif key == 'enter':
-        data = sline.buf[1:].strip()
-
-        if len(data) == 0:
-            sline.buf = ""
-            mode().abort()
-            return
-
-        match = re.match(excmd_pattern, data)
-
-        if match != None:
-            cmd, args = match.groups()
-            if len(args) == 0:
-                args = None
-            if not do_excmd(cmd, args):
-                ui().notify("Not an editor command: " + cmd, error=True)
-        else:
-            ui().notify("Malformed command: " + data, error=True)
-        sline.buf = ""
-        mode().abort()
-        return
     elif key == 'left':
         sline.pos -= 1
         if sline.pos < 1:
@@ -218,7 +253,10 @@ class ExCommand(object):
     def __call__(self, *args, **kwargs):
         self.run(*args, **kwargs)
 
-def excommand(name, tab_complete = None):
+def null_tab_complete(string):
+    return []
+
+def excommand(name, tab_complete = null_tab_complete):
     def func(target):
         ExCommand(name, target, tab_complete)
         return target
