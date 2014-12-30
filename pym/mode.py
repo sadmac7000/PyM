@@ -134,8 +134,7 @@ def insert_mode_keys(key, buf, sline):
     elif key == 'down':
         buf.down_motion().execute()
     else:
-        buf.insert(key)
-        buf.right_motion().execute()
+        buf.insert(key).execute()
 
 @excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
 def excmd_mode_keys(key, buf, sline):
