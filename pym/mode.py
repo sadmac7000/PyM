@@ -136,6 +136,8 @@ def insert_mode_keys(key):
     else:
         buf.insert(key).execute()
 
+excmd_pattern = re.compile('([a-zA-Z_][a-zA-Z0-9_]*)(.*)')
+
 @excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
 def excmd_mode_keys(key):
     """
@@ -162,15 +164,16 @@ def excmd_mode_keys(key):
             mode().abort()
             return
 
-        data = data.split(None, 1)
-        cmd = data[0]
-        if len(data) > 1:
-            args = data[1]
-        else:
-            args = None
+        match = re.match(excmd_pattern, data)
 
-        if not do_excmd(cmd, args):
-            ui().notify("Not an editor command: " + cmd, error=True)
+        if match != None:
+            cmd, args = match.groups()
+            if len(args) == 0:
+                args = None
+            if not do_excmd(cmd, args):
+                ui().notify("Not an editor command: " + cmd, error=True)
+        else:
+            ui().notify("Malformed command: " + data, error=True)
         sline.buf = ""
         mode().abort()
         return
