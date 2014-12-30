@@ -16,7 +16,7 @@
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
 from .mode import excommand
-from .ui_core import ui
+from .ui import ui
 from .buf import NoFileNameError
 
 @excommand("quit")

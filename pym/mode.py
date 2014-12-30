@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
-from .ui_core import ui
+from .ui import ui
 from .key_parse import parse_key_expr
 import re
 

@@ -16,7 +16,7 @@
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
 import urwid
-from .ui_core import ui, UI
+from .ui import ui, UI
 from .buf import Buffer
 from .mode import mode, StatusLineBuf, normal
 import importlib

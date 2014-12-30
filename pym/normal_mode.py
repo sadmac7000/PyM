@@ -17,7 +17,7 @@
 
 from .mode import normal, insert, excmd, mode
 from .key_parse import key_macro
-from .ui_core import ui
+from .ui import ui
 
 @key_macro("#?(h|j|k|l|<enter>)")
 def motion(key):
