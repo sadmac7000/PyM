@@ -31,6 +31,18 @@ class UI(object):
         """
         raise NotImplementedError("UI does not implement notify()")
 
+    def buf(self):
+        """
+        Get the active buffer
+        """
+        raise NotImplementedError("UI does not implement buf()")
+
+    def sline(self):
+        """
+        Get the status line buffer
+        """
+        raise NotImplementedError("UI does not implement buf()")
+
 _ui = None
 
 class UIOverrideError(Exception):

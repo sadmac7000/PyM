@@ -16,9 +16,8 @@
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
 from .ui_core import ui
+from .key_parse import parse_key_expr
 import re
-
-_mode = None
 
 class StatusLineBuf:
     """
@@ -96,7 +95,7 @@ class Mode():
             self.key_tokens += [key]
             cont = False
             for handler in self.key_handlers:
-                got = handler(self, buf, sline)
+                got = handler(self)
                 if got == "done":
                     self.reset()
                     return
@@ -112,18 +111,67 @@ class Mode():
         self.key_handlers += [handler]
         return handler
 
-_mode = normal = Mode(None, tokenize_ints=True)
+class NormalMode(Mode):
+    def __init__(self, *args, **kwargs):
+        Mode.__init__(self, *args, **kwargs)
+        self.key_exprs = []
+
+    def reset(self):
+        for expr, func in self.key_exprs:
+            expr.reset()
+
+        return False
+
+    def handle_key(self, key, buf, sline):
+        """
+        Handle a keypress for this mode
+        """
+        global _mode
+        if key == 'esc' and not self.reset():
+            self.abort(buf)
+
+        try_again = False
+
+        for expr, func in self.key_exprs:
+            if not expr.ready:
+                continue
+
+            ret = expr.offer(key)
+            try_again = expr.ready or try_again
+
+            if not ret:
+                continue
+
+            if expr.complete:
+                func(expr.get_parse(), buf, sline)
+                try_again = False
+                break
+
+        if not try_again:
+            for expr, func in self.key_exprs:
+                expr.reset()
+
+    def handle(self, expr):
+        expr = parse_key_expr(expr)
+        def decor(func):
+            self.key_exprs.append((expr, func))
+            return func
+        return decor
+
+_mode = normal = NormalMode(None)
 insert = Mode(normal, "-- INSERT --", insert=True)
 excmd = Mode(normal, '', 'sline')
 
 normal.abort_mode = normal
 
 @insert.register_handler
-def insert_mode_keys(mode, buf, sline):
+def insert_mode_keys(mode):
     """
     Handles keys in insert mode. For most renderable ASCII keys, this just
     inserts them in the buffer.
     """
+    buf = ui().buf()
+    sline = ui().sline()
     key = mode.key_tokens[0]
 
     if key == 'backspace':
@@ -162,11 +210,13 @@ def insert_mode_keys(mode, buf, sline):
     return "done"
 
 @excmd.register_handler
-def excmd_mode_keys(mode, buf, sline):
+def excmd_mode_keys(mode):
     """
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.
     """
+    buf = ui().buf()
+    sline = ui().sline()
     key = mode.key_tokens[0]
 
     if key == 'backspace':

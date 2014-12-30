@@ -48,6 +48,14 @@ class UrwidUI(UI):
         status_msg = message
         status_err = error
 
+    def buf(self):
+        global buf
+        return buf
+
+    def sline(self):
+        global sline
+        return sline.buf
+
 ui(UrwidUI())
 
 urwid.set_encoding("UTF-8")
