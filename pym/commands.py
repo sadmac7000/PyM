@@ -17,27 +17,26 @@
 
 from .mode import excommand
 from .ui import ui
-from .buf import NoFileNameError
 
 @excommand("quit")
-def quitcmd(args, sline, buf):
+def quitcmd(args):
     if args == None:
         ui().quit()
     ui().notify("Trailing characters", error=True)
 
 @excommand("edit")
-def editcmd(args, sline, buf):
+def editcmd(args):
     try:
-        buf.loadfile(args)
+        ui().buf.loadfile(args)
     except NoFileNameError:
         ui().notify("No File Name", error=True)
     except PermissionError:
         ui().notify("Permission denied", error=True)
 
 @excommand("write")
-def writecmd(args, sline, buf):
+def writecmd(args):
     try:
-        buf.writefile(args)
+        ui().buf.writefile(args)
     except NoFileNameError:
         ui().notify("No File Name", error=True)
     except PermissionError:

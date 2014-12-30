@@ -163,7 +163,7 @@ def excmd_mode_keys(key, buf, sline):
         else:
             args = None
 
-        if not do_excmd(cmd, args, sline, buf):
+        if not do_excmd(cmd, args):
             ui().notify("Not an editor command: " + cmd, error=True)
         sline.buf = ""
         mode().abort(buf)
@@ -215,7 +215,7 @@ def excommand(name, tab_complete = None):
         return target
     return func
 
-def do_excmd(cmd, args, sline, buf):
+def do_excmd(cmd, args):
     """
     Process a command
     """
@@ -223,5 +223,5 @@ def do_excmd(cmd, args, sline, buf):
     if not cmd in excmds:
         return False
 
-    excmds[cmd](args, sline, buf)
+    excmds[cmd](args)
     return True
