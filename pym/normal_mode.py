@@ -106,7 +106,6 @@ def normal_mode_to_command_mode(key, buf, sline):
     sline.buf = ':'
     sline.pos = 1
     mode(excmd)
-    buf.mode_changed()
 
 @normal.handle('i|a|A')
 def normal_mode_to_insert_mode(key, buf, sline):
@@ -114,7 +113,6 @@ def normal_mode_to_insert_mode(key, buf, sline):
     Key press handler for `i`, `a`, and `A` in normal mode
     """
     mode(insert)
-    buf.mode_changed()
     if key == 'A':
         buf.move_to(buf.row, len(buf.lines[buf.row]))
     elif key == 'a':
