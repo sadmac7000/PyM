@@ -225,7 +225,7 @@ def excmd_mode_keys(mode, buf, sline):
 excmds = {}
 
 class ExCommand(object):
-    def __init__(self, name, run, tab_complete = None):
+    def __init__(self, name, run, tab_complete):
         global excmds
 
         self.tab_complete = tab_complete
@@ -250,6 +250,12 @@ class ExCommand(object):
 
     def __call__(self, *args, **kwargs):
         self.run(*args, **kwargs)
+
+def excommand(name, tab_complete = None):
+    def func(target):
+        ExCommand(name, target, tab_complete)
+        return target
+    return func
 
 def do_excmd(cmd, args, sline, buf):
     """

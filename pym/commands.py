@@ -15,17 +15,17 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
-from .mode import ExCommand
+from .mode import excommand
 from .ui_core import ui
 from .buf import NoFileNameError
 
+@excommand("quit")
 def quitcmd(args, sline, buf):
     if args == None:
         ui().quit()
     ui().notify("Trailing characters", error=True)
 
-ExCommand("quit", quitcmd)
-
+@excommand("edit")
 def editcmd(args, sline, buf):
     try:
         buf.loadfile(args)
@@ -34,8 +34,7 @@ def editcmd(args, sline, buf):
     except PermissionError:
         ui().notify("Permission denied", error=True)
 
-ExCommand("edit", editcmd)
-
+@excommand("write")
 def writecmd(args, sline, buf):
     try:
         buf.writefile(args)
@@ -45,6 +44,3 @@ def writecmd(args, sline, buf):
         ui().notify("Permission denied", error=True)
     except FileNotFoundError:
         ui().notify("No Such File or Directory", error=True)
-
-
-ExCommand("write", writecmd)
