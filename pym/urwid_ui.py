@@ -201,7 +201,7 @@ palette = [('tab', 'black,underline', 'light gray'),
 
 def do_input(key):
     "Input line handling"
-    mode().handle_key(key, buf, sline.buf)
+    mode().handle_key(key)
     bdisp._invalidate()
     sline._invalidate()
     tabset._invalidate()

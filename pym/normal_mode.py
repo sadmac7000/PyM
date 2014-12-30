@@ -42,7 +42,7 @@ def motion(key):
         return ui().buf.down_motion(amt)
 
 @normal.handle('#?d(d|`motion`)')
-def normal_delete(keys, buf, sline):
+def normal_delete(keys):
     """
     Key press handler for `d` in normal mode
     """
@@ -52,12 +52,12 @@ def normal_delete(keys, buf, sline):
         count = 1
 
     if motion == 'd':
-        motion = buf.down_motion(count - 1)
+        motion = ui().buf.down_motion(count - 1)
 
     motion.delete()
 
 @normal.handle('m@')
-def normal_mode_mark(keys, buf, sline):
+def normal_mode_mark(keys):
     """
     Key press handler for `m` in normal mode
     """
@@ -66,10 +66,10 @@ def normal_mode_mark(keys, buf, sline):
     if key == '`':
         key = "'"
 
-    buf.mark(key)
+    ui().buf.mark(key)
 
 @normal.handle("('|<`>)@")
-def normal_mode_goto(keys, buf, sline):
+def normal_mode_goto(keys):
     """
     Key press handler for '`' in normal mode
     """
@@ -78,17 +78,17 @@ def normal_mode_goto(keys, buf, sline):
     if key == '`':
         key = "'"
 
-    buf.restore_mark(key)
+    ui().buf.restore_mark(key)
 
 @normal.handle("`motion`")
-def normal_mode_motion(motion, buf, sline):
+def normal_mode_motion(motion):
     """
     Key press handler for motions in normal mode
     """
     motion.execute()
 
 @normal.handle('#?x')
-def normal_delchar_key(key, buf, sline):
+def normal_delchar_key(key):
     """
     Key press handler for `x` in normal mode
     """
@@ -96,23 +96,25 @@ def normal_delchar_key(key, buf, sline):
 
     if count == None:
         count = 1
-    buf.right_motion(count).delete()
+    ui().buf.right_motion(count).delete()
 
 @normal.handle(':')
-def normal_mode_to_command_mode(key, buf, sline):
+def normal_mode_to_command_mode(key):
     """
     Key press handler for `:` in normal mode
     """
+    sline = ui().sline
     sline.buf = ':'
     sline.pos = 1
     mode(excmd)
 
 @normal.handle('i|a|A')
-def normal_mode_to_insert_mode(key, buf, sline):
+def normal_mode_to_insert_mode(key):
     """
     Key press handler for `i`, `a`, and `A` in normal mode
     """
     mode(insert)
+    buf = ui().buf
     if key == 'A':
         buf.move_to(buf.row, len(buf.lines[buf.row]))
     elif key == 'a':

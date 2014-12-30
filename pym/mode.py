@@ -70,7 +70,7 @@ class Mode():
 
         return False
 
-    def handle_key(self, key, buf, sline):
+    def handle_key(self, key):
         """
         Handle a keypress for this mode
         """
@@ -90,7 +90,7 @@ class Mode():
                 continue
 
             if expr.complete:
-                func(expr.get_parse(), buf, sline)
+                func(expr.get_parse())
                 try_again = False
                 break
 
@@ -111,11 +111,14 @@ insert = Mode(normal, "-- INSERT --", insert=True)
 excmd = Mode(normal, '', 'sline')
 
 @insert.handle("@|<backspace>|<delete>|<enter>|<left>|<right>|<up>|<down>")
-def insert_mode_keys(key, buf, sline):
+def insert_mode_keys(key):
     """
     Handles keys in insert mode. For most renderable ASCII keys, this just
     inserts them in the buffer.
     """
+
+    buf = ui().buf
+
     if key == 'backspace':
         buf.left_motion().delete()
     elif key == 'delete':
@@ -134,11 +137,14 @@ def insert_mode_keys(key, buf, sline):
         buf.insert(key).execute()
 
 @excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
-def excmd_mode_keys(key, buf, sline):
+def excmd_mode_keys(key):
     """
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.
     """
+
+    sline = ui().sline
+
     if key == 'backspace':
         sline.pos -= 1
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
