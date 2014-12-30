@@ -17,6 +17,7 @@
 
 from .mode import ExCommand
 from .ui_core import ui
+from .buf import NoFileNameError
 
 def quitcmd(args, sline, buf):
     if args == None:
@@ -26,11 +27,24 @@ def quitcmd(args, sline, buf):
 ExCommand("quit", quitcmd)
 
 def editcmd(args, sline, buf):
-    buf.loadfile(args)
+    try:
+        buf.loadfile(args)
+    except NoFileNameError:
+        ui().notify("No File Name", error=True)
+    except PermissionError:
+        ui().notify("Permission denied", error=True)
 
 ExCommand("edit", editcmd)
 
 def writecmd(args, sline, buf):
-    buf.writefile(args)
+    try:
+        buf.writefile(args)
+    except NoFileNameError:
+        ui().notify("No File Name", error=True)
+    except PermissionError:
+        ui().notify("Permission denied", error=True)
+    except FileNotFoundError:
+        ui().notify("No Such File or Directory", error=True)
+
 
 ExCommand("write", writecmd)

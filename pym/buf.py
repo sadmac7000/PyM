@@ -18,6 +18,13 @@
 from .mode import mode
 import os
 
+class NoFileNameError(Exception):
+    """
+    Exception raised when we try to use the recorded file name of a buffer that
+    doesn't have one.
+    """
+    pass
+
 class Motion():
     """
     A motion describes a movement of the cursor over a region of text, but it
@@ -172,34 +179,43 @@ class Buffer():
             end = len(self.lines)
         return [ x.encode() for x in self.lines[start:end] ]
 
-    def loadfile(self, path):
+    def loadfile(self, path = None):
         """
         Replace the contents of this buffer with the contents of the file at
         the given path.
         """
-        self.path = os.path.abspath(path)
+        if path != None:
+            self.path = os.path.abspath(path)
+        elif self.path == None:
+            raise NoFileNameError()
 
-        self.lines = []
-        self.dirty = False
-
-        if not os.path.exists(self.path):
+        try:
+            os.stat(self.path)
+        except FileNotFoundError:
+            self.dirty = False
             #TODO: Notify if the directory isn't there either
             self.lines = ['']
             return
 
-        with open(path, 'r') as f:
+        new_lines = []
+
+        with open(self.path, 'r') as f:
             for line in f.readlines():
                 if line.endswith('\n'):
                     line = line[:-1]
-                self.lines += [line]
-        if len(self.lines) == 0:
+                new_lines += [line]
+
+        if len(new_lines) == 0:
             self.lines = ['']
+        else:
+            self.lines = new_lines
 
     def writefile(self, path = None):
         if path == None:
             path = self.path
 
-        #TODO: If the path is still None?
+        if path == None:
+            raise NoFileNameError()
 
         with open(path, "wb") as f:
             f.write(("\n".join(self.lines)+"\n").encode())
