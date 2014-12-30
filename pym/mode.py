@@ -36,7 +36,7 @@ def mode(newmode = None):
 
     if newmode != None:
         _mode = newmode
-        ui().buf().mode_changed()
+        ui().buf.mode_changed()
 
     return _mode
 

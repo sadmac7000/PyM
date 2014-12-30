@@ -30,16 +30,16 @@ def motion(key):
         amt = 1
 
     if key == 'h':
-        return ui().buf().left_motion(amt)
+        return ui().buf.left_motion(amt)
 
     if key == 'l':
-        return ui().buf().right_motion(amt)
+        return ui().buf.right_motion(amt)
 
     if key == 'k':
-        return ui().buf().up_motion(amt)
+        return ui().buf.up_motion(amt)
 
     if key == 'j' or key == 'enter':
-        return ui().buf().down_motion(amt)
+        return ui().buf.down_motion(amt)
 
 @normal.handle('#?d(d|`motion`)')
 def normal_delete(keys, buf, sline):

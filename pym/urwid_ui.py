@@ -48,10 +48,12 @@ class UrwidUI(UI):
         status_msg = message
         status_err = error
 
+    @property
     def buf(self):
         global buf
         return buf
 
+    @property
     def sline(self):
         global sline
         return sline.buf

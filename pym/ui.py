@@ -31,17 +31,19 @@ class UI(object):
         """
         raise NotImplementedError("UI does not implement notify()")
 
+    @property
     def buf(self):
         """
         Get the active buffer
         """
-        raise NotImplementedError("UI does not implement buf()")
+        raise NotImplementedError("UI does not implement buf")
 
+    @property
     def sline(self):
         """
         Get the status line buffer
         """
-        raise NotImplementedError("UI does not implement buf()")
+        raise NotImplementedError("UI does not implement sline")
 
 _ui = None
 
