@@ -46,14 +46,12 @@ class Mode():
     ESC always exits the mode (restoring the mode specified by the abort mode)
     """
     def __init__(self, abort_mode, label = "",
-            focus="buffer", insert=False, tokenize_ints=False):
+            focus="buffer", insert=False):
         self.label = label
-        self.key_handlers = []
+        self.key_exprs = []
         self.abort_mode = abort_mode
         self.focus=focus
         self.insert = insert
-        self.key_tokens = []
-        self.tokenize_ints = tokenize_ints
 
     def abort(self, buf):
         """
@@ -66,57 +64,8 @@ class Mode():
 
     def reset(self):
         """
-        Reset the key token buffer
+        Reset parsing on all key expressions
         """
-
-        if len(self.key_tokens):
-            self.key_tokens = []
-            return True
-        return False
-
-    def handle_key(self, key, buf, sline):
-        """
-        Handle a keypress for this mode
-        """
-        global _mode
-        if key == 'esc':
-            if not self.reset():
-                self.abort(buf)
-        elif self.tokenize_ints and re.match(r'[1-9]', key):
-            if len(self.key_tokens) > 0 and type(self.key_tokens[-1]) == int:
-                self.key_tokens[-1] *= 10
-                self.key_tokens[-1] += int(key)
-            else:
-                self.key_tokens += [int(key)]
-        elif self.tokenize_ints and key == '0' and \
-                type(self.key_tokens[-1]) == int:
-            self.key_tokens[-1] *= 10
-        else:
-            self.key_tokens += [key]
-            cont = False
-            for handler in self.key_handlers:
-                got = handler(self)
-                if got == "done":
-                    self.reset()
-                    return
-                elif got == "continue":
-                    cont = True
-            if not cont:
-                self.reset()
-
-    def register_handler(self, handler):
-        """
-        Register a new key handler with this mode
-        """
-        self.key_handlers += [handler]
-        return handler
-
-class NormalMode(Mode):
-    def __init__(self, *args, **kwargs):
-        Mode.__init__(self, *args, **kwargs)
-        self.key_exprs = []
-
-    def reset(self):
         for expr, func in self.key_exprs:
             expr.reset()
 
@@ -158,67 +107,42 @@ class NormalMode(Mode):
             return func
         return decor
 
-_mode = normal = NormalMode(None)
+_mode = normal = Mode(None)
 insert = Mode(normal, "-- INSERT --", insert=True)
 excmd = Mode(normal, '', 'sline')
 
 normal.abort_mode = normal
 
-@insert.register_handler
-def insert_mode_keys(mode):
+@insert.handle("@|<backspace>|<delete>|<enter>|<left>|<right>|<up>|<down>")
+def insert_mode_keys(key, buf, sline):
     """
     Handles keys in insert mode. For most renderable ASCII keys, this just
     inserts them in the buffer.
     """
-    buf = ui().buf()
-    sline = ui().sline()
-    key = mode.key_tokens[0]
-
     if key == 'backspace':
         buf.left_motion().delete()
-        return "done"
-
-    if key == 'delete':
+    elif key == 'delete':
         buf.delete()
-        return "done"
-
-    if key == 'enter':
+    elif key == 'enter':
         buf.insert('\n').execute()
-        return "done"
-
-    if key == 'left':
+    elif key == 'left':
         buf.left_motion().execute()
-        return "done"
-
-    if key == 'right':
+    elif key == 'right':
         buf.right_motion().execute()
-        return "done"
-
-    if key == 'up':
+    elif key == 'up':
         buf.up_motion().execute()
-        return "done"
-
-    if key == 'down':
+    elif key == 'down':
         buf.down_motion().execute()
-        return "done"
+    else:
+        buf.insert(key)
+        buf.right_motion().execute()
 
-    if len(key) > 1:
-        return "done"
-
-    buf.insert(key)
-    buf.right_motion().execute()
-    return "done"
-
-@excmd.register_handler
-def excmd_mode_keys(mode):
+@excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
+def excmd_mode_keys(key, buf, sline):
     """
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.
     """
-    buf = ui().buf()
-    sline = ui().sline()
-    key = mode.key_tokens[0]
-
     if key == 'backspace':
         sline.pos -= 1
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
@@ -226,19 +150,15 @@ def excmd_mode_keys(mode):
         if sline.pos == 0:
             sline.buf = ""
             _mode.abort(buf)
-        return "done"
-
-    if key == 'delete':
+    elif key == 'delete':
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
-        return "done"
-
-    if key == 'enter':
+    elif key == 'enter':
         data = sline.buf[1:].strip()
 
         if len(data) == 0:
             sline.buf = ""
             _mode.abort(buf)
-            return "done"
+            return
 
         data = data.split(None, 1)
         cmd = data[0]
@@ -251,26 +171,18 @@ def excmd_mode_keys(mode):
             ui().notify("Not an editor command: " + cmd, error=True)
         sline.buf = ""
         _mode.abort(buf)
-        return "done"
-
-    if key == 'left':
+        return
+    elif key == 'left':
         sline.pos -= 1
         if sline.pos < 1:
             sline.pos = 1
-
-    if key == 'right':
+    elif key == 'right':
         sline.pos += 1
         if sline.pos > len(sline.buf):
             sline.pos = len(sline.buf)
-
-    if len(key) > 1:
-        sline.buf = ""
-        _mode.abort(buf)
-        return "done"
-
-    sline.buf = sline.buf[:sline.pos] + key + sline.buf[sline.pos:]
-    sline.pos += 1
-    return "done"
+    else:
+        sline.buf = sline.buf[:sline.pos] + key + sline.buf[sline.pos:]
+        sline.pos += 1
 
 excmds = {}
 
