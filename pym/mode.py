@@ -54,7 +54,7 @@ class Mode():
         self.focus=focus
         self.insert = insert
 
-    def abort(self, buf):
+    def abort(self):
         """
         Exit this mode, return to its abort mode
         """
@@ -75,7 +75,7 @@ class Mode():
         Handle a keypress for this mode
         """
         if key == 'esc' and not self.reset():
-            self.abort(buf)
+            self.abort()
 
         try_again = False
 
@@ -145,7 +145,7 @@ def excmd_mode_keys(key, buf, sline):
 
         if sline.pos == 0:
             sline.buf = ""
-            mode().abort(buf)
+            mode().abort()
     elif key == 'delete':
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
     elif key == 'enter':
@@ -153,7 +153,7 @@ def excmd_mode_keys(key, buf, sline):
 
         if len(data) == 0:
             sline.buf = ""
-            mode().abort(buf)
+            mode().abort()
             return
 
         data = data.split(None, 1)
@@ -166,7 +166,7 @@ def excmd_mode_keys(key, buf, sline):
         if not do_excmd(cmd, args):
             ui().notify("Not an editor command: " + cmd, error=True)
         sline.buf = ""
-        mode().abort(buf)
+        mode().abort()
         return
     elif key == 'left':
         sline.pos -= 1
