@@ -303,6 +303,33 @@ class Buffer(object):
         """
         return Motion(self, (self.row, self.col), (self.row, self.col + count))
 
+    def forward_motion(self, count=1):
+        """
+        Get a motion that moves the cursor right by the given number of
+        columns. If we reach the end of the line, we count skipping to the next
+        line as one column.
+        """
+
+        line = self.row
+        col = self.col
+
+        while (len(self.lines[line]) - col) < count and \
+                line < (len(self.lines) - 1):
+            count -= len(self.lines)
+            count -= 1
+            col = 0
+            line += 1
+
+        if line == len(self.lines):
+            col = len(self.lines[line]) - 1
+        elif (len(self.lines[line]) - col) == count:
+            col = 0
+            line += 1
+        else:
+            col += count
+
+        return Motion(self, (self.row, self.col), (line, col))
+
     def insert(self, data, row=None, col=None):
         """
         Insert new text at the given row and column. If the position is not

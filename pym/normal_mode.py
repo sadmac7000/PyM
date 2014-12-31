@@ -23,7 +23,7 @@ from pym import pym
 from .mode import normal, insert, excmd
 from .key_parse import key_macro
 
-@key_macro("#?(h|j|k|l|<enter>)")
+@key_macro("#?(h|j|k|l|<enter>| )")
 def motion(key):
     """
     Generic key press receiver for motion keys
@@ -44,6 +44,9 @@ def motion(key):
 
     if key == 'j' or key == 'enter':
         return pym.buf.down_motion(amt)
+
+    if key == ' ':
+        return pym.buf.forward_motion(amt)
 
 @normal.handle('#?d(d|`motion`)')
 def normal_delete(keys):
