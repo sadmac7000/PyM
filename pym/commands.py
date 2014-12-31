@@ -54,7 +54,7 @@ def editcmd(args):
     :edit
     """
     try:
-        pym.buf.loadfile(args)
+        pym.buf.load_file(args)
     except NoFileNameError:
         pym.notify("No File Name", error=True)
     except PermissionError:
@@ -66,7 +66,7 @@ def writecmd(args):
     :write
     """
     try:
-        pym.buf.writefile(args)
+        pym.buf.write_file(args)
     except NoFileNameError:
         pym.notify("No File Name", error=True)
     except PermissionError:

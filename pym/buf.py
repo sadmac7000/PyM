@@ -144,7 +144,7 @@ class Buffer(object):
         self.dirty = False
 
         if path != None:
-            self.loadfile(path)
+            self.load_file(path)
 
         self.markers = {}
 
@@ -188,7 +188,7 @@ class Buffer(object):
             end = len(self.lines)
         return [x.encode() for x in self.lines[start:end]]
 
-    def loadfile(self, path=None):
+    def load_file(self, path=None):
         """
         Replace the contents of this buffer with the contents of the file at
         the given path.
@@ -219,7 +219,7 @@ class Buffer(object):
         else:
             self.lines = new_lines
 
-    def writefile(self, path=None):
+    def write_file(self, path=None):
         """
         Write the contents of this buffer to a file. If no path is given, use
         the last known location.
