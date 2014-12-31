@@ -9,11 +9,17 @@
 # later version.
 #
 # PyM is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
+
+# pylint: disable=too-few-public-methods
+
+"""
+Handling for text buffers. This is the core of the editor.
+"""
 
 import os
 from pym import pym
@@ -25,7 +31,7 @@ class NoFileNameError(Exception):
     """
     pass
 
-class Motion():
+class Motion(object):
     """
     A motion describes a movement of the cursor over a region of text, but it
     is much more than that. It is used to store regions of text for
@@ -115,21 +121,21 @@ class LineMotion(Motion):
     """
     def __init__(self, buf, start, end):
         if end >= start:
-            super(LineMotion, self).__init__(buf, (start,0),(end + 1, 0))
+            super(LineMotion, self).__init__(buf, (start, 0), (end + 1, 0))
         else:
-            super(LineMotion, self).__init__(buf, (start+1,0),(end, 0))
+            super(LineMotion, self).__init__(buf, (start + 1, 0), (end, 0))
 
         self.target = end
 
     def execute(self):
         self.buf.move_to(self.target, self.buf.col_want)
 
-class Buffer():
+class Buffer(object):
     """
     A buffer stores a filesworth of text as a list of lines. It can generate
     motion objects over that text and maintains a cursor position.
     """
-    def __init__(self, path = None):
+    def __init__(self, path=None):
         self.lines = [""]
         self.path = None
         self.row = 0
@@ -143,6 +149,9 @@ class Buffer():
         self.markers = {}
 
     def headline(self):
+        """
+        Get a text headline for this buffer for the UI
+        """
         if self.dirty:
             dirty_marker = "+ "
         else:
@@ -153,7 +162,7 @@ class Buffer():
 
         return dirty_marker + os.path.relpath(self.path)
 
-    def mark(self, char= "'"):
+    def mark(self, char="'"):
         """
         Store a mark position which can be returned to. We use the current
         cursor position and pass a name, which is usually a single character.
@@ -170,16 +179,16 @@ class Buffer():
             return True
         return False
 
-    def encoded(self, start = 0, end = None):
+    def encoded(self, start=0, end=None):
         """
         Get the contents of this buffer as a list of lines which have been
         encoded as UTF-8 bytes objects.
         """
         if end == None:
             end = len(self.lines)
-        return [ x.encode() for x in self.lines[start:end] ]
+        return [x.encode() for x in self.lines[start:end]]
 
-    def loadfile(self, path = None):
+    def loadfile(self, path=None):
         """
         Replace the contents of this buffer with the contents of the file at
         the given path.
@@ -210,7 +219,11 @@ class Buffer():
         else:
             self.lines = new_lines
 
-    def writefile(self, path = None):
+    def writefile(self, path=None):
+        """
+        Write the contents of this buffer to a file. If no path is given, use
+        the last known location.
+        """
         if path == None:
             path = self.path
 
@@ -254,8 +267,7 @@ class Buffer():
             row = len(self.lines) - 1
 
         if pym.mode.insert and col > len(self.lines[row]) or (
-            not pym.mode.insert and col >= len(self.lines[row])
-                ):
+                not pym.mode.insert and col >= len(self.lines[row])):
             self.col_want = col
             col = len(self.lines[row])
             if not pym.mode.insert:
@@ -267,29 +279,29 @@ class Buffer():
         self.row = row
         self.col = col
 
-    def down_motion(self, count = 1):
+    def down_motion(self, count=1):
         """
         Get a motion that moves the cursor down by the given number of lines.
         """
         return LineMotion(self, self.row, self.row + count)
 
-    def up_motion(self, count = 1):
+    def up_motion(self, count=1):
         """
         Get a motion that moves the cursor up by the given number of lines.
         """
         return LineMotion(self, self.row, self.row - count)
 
-    def left_motion(self, count = 1):
+    def left_motion(self, count=1):
         """
         Get a motion that moves the cursor left by the given number of columns.
         """
-        return Motion(self, (self.row, self.col), (self.row,self.col - count))
+        return Motion(self, (self.row, self.col), (self.row, self.col - count))
 
-    def right_motion(self, count = 1):
+    def right_motion(self, count=1):
         """
         Get a motion that moves the cursor right by the given number of columns.
         """
-        return Motion(self, (self.row, self.col), (self.row,self.col + count))
+        return Motion(self, (self.row, self.col), (self.row, self.col + count))
 
     def insert(self, data, row=None, col=None):
         """
@@ -314,4 +326,4 @@ class Buffer():
         self.lines[end_row] += postfix
         self.dirty = True
 
-        return Motion(self, (row,col), (end_row,end_col))
+        return Motion(self, (row, col), (end_row, end_col))

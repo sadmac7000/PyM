@@ -9,18 +9,24 @@
 # later version.
 #
 # PyM is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
+
+# pylint: disable=redefined-outer-name,too-few-public-methods
+
+"""
+Mode handling for PyM
+"""
 
 from pym import pym
 from .key_parse import parse_key_expr
 import re
 import os
 
-class StatusLineBuf:
+class StatusLineBuf(object):
     """
     A buffer for the contents of the status line, when the status line is
     showing primary content (i.e. in command-line mode)
@@ -29,18 +35,18 @@ class StatusLineBuf:
         self.buf = ""
         self.pos = 0
 
-class Mode():
+class Mode(object):
     """
     The PyM mode determines everything about how the editor reacts to input
     from the user. The abstract mode can be defined to do almost anything, but
     ESC always exits the mode (restoring the mode specified by the abort mode)
     """
-    def __init__(self, abort_mode, label = "",
-            focus="buffer", insert=False):
+    def __init__(self, abort_mode, label="",
+                 focus="buffer", insert=False):
         self.label = label
         self.key_exprs = []
         self.abort_mode = abort_mode
-        self.focus=focus
+        self.focus = focus
         self.insert = insert
 
     def abort(self):
@@ -54,7 +60,7 @@ class Mode():
         """
         Reset parsing on all key expressions
         """
-        for expr, func in self.key_exprs:
+        for expr, _ in self.key_exprs:
             expr.reset()
 
         return False
@@ -88,8 +94,14 @@ class Mode():
                 expr.reset()
 
     def handle(self, expr):
+        """
+        Set up a handler for a key sequence
+        """
         expr = parse_key_expr(expr)
         def decor(func):
+            """
+            Decorator to capture the function that will handle this expression
+            """
             self.key_exprs.append((expr, func))
             return func
         return decor
@@ -125,15 +137,13 @@ def insert_mode_keys(key):
     else:
         buf.insert(key).execute()
 
-excmd_pattern = re.compile('([a-zA-Z_][a-zA-Z0-9_]*)\s*(.*)')
+excmd_pattern = re.compile(r'([a-zA-Z_][a-zA-Z0-9_]*)\s*(.*)')
 
 @excmd.handle('<tab>')
-def excmd_tab_complete(key):
+def excmd_tab_complete(_):
     """
     Tab completion for command mode
     """
-    global excmds
-
     sline = pym.sline
     data = sline.buf[1:sline.pos].lstrip()
 
@@ -160,7 +170,11 @@ def excmd_tab_complete(key):
         sline.pos += len(new_args)
 
 @excmd.handle('<enter>')
-def excmd_parse_exec(key):
+def excmd_parse_exec(_):
+    """
+    Parse and execute an ex command in command mode
+    """
+
     sline = pym.sline
     data = sline.buf[1:].strip()
 
@@ -215,9 +229,11 @@ def excmd_mode_keys(key):
 excmds = {}
 
 class ExCommand(object):
-    def __init__(self, name, run, tab_complete):
-        global excmds
+    """
+    An Ex Command
+    """
 
+    def __init__(self, name, run, tab_complete):
         self.tab_complete = tab_complete
         self.run = run
         self.name = name
@@ -241,11 +257,20 @@ class ExCommand(object):
     def __call__(self, *args, **kwargs):
         self.run(*args, **kwargs)
 
-def null_tab_complete(string):
+def null_tab_complete(_):
+    """
+    Tab completion method which offers no completions
+    """
     return []
 
-def excommand(name, tab_complete = null_tab_complete):
+def excommand(name, tab_complete=null_tab_complete):
+    """
+    Decorator to create an Ex command
+    """
     def func(target):
+        """
+        Function to actually perform decoration
+        """
         ExCommand(name, target, tab_complete)
         return target
     return func

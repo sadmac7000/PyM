@@ -9,11 +9,15 @@
 # later version.
 #
 # PyM is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+PyM is a VI-like editor written in Python
+"""
 
 pym = None
 
@@ -23,12 +27,15 @@ class PymInitError(Exception):
     """
     pass
 
-def pym_init(ui):
+def pym_init(uio):
+    """
+    Initialize the PyM library
+    """
     global pym
 
     if pym != None:
         raise PymInitError("Attempt to initialize PyM twice")
-    pym = ui
+    pym = uio
 
 from pym import urwid_ui
 from pym import buf

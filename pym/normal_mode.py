@@ -9,11 +9,15 @@
 # later version.
 #
 # PyM is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+Standard bindings for normal mode
+"""
 
 from pym import pym
 from .mode import normal, insert, excmd
@@ -46,15 +50,15 @@ def normal_delete(keys):
     """
     Key press handler for `d` in normal mode
     """
-    count, key, motion = keys
+    count, _, mot = keys
 
     if count == None:
         count = 1
 
-    if motion == 'd':
-        motion = pym.buf.down_motion(count - 1)
+    if mot == 'd':
+        mot = pym.buf.down_motion(count - 1)
 
-    motion.delete()
+    mot.delete()
 
 @normal.handle('m@')
 def normal_mode_mark(keys):
@@ -81,11 +85,11 @@ def normal_mode_goto(keys):
     pym.buf.restore_mark(key)
 
 @normal.handle("`motion`")
-def normal_mode_motion(motion):
+def normal_mode_motion(mot):
     """
     Key press handler for motions in normal mode
     """
-    motion.execute()
+    mot.execute()
 
 @normal.handle('#?x')
 def normal_delchar_key(key):
@@ -99,7 +103,7 @@ def normal_delchar_key(key):
     pym.buf.right_motion(count).delete()
 
 @normal.handle(':')
-def normal_mode_to_command_mode(key):
+def normal_mode_to_command_mode(_):
     """
     Key press handler for `:` in normal mode
     """

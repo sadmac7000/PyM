@@ -9,11 +9,18 @@
 # later version.
 #
 # PyM is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
+
+# pylint: disable=attribute-defined-outside-init
+
+"""
+A utility for recognizing regular languages of key sequences, and a parser to
+parse strings expressing such languages
+"""
 
 import re
 
@@ -23,27 +30,49 @@ class KeyParser(object):
     """
 
     def __init__(self):
-        def func(x): return x
+        def func(x):
+            """
+            Default null filter
+            """
+            return x
         self.reset()
         self.filt = func
 
     def clone(self):
+        """
+        Duplicate this Key Parser
+        """
         raise NotImplementedError("Key Parser does not implement clone()")
 
     def offer(self, key):
+        """
+        Offer a key to this key parser for parsing
+        """
         raise NotImplementedError("Key Parser does not implement offer()")
 
     def get_parse(self):
+        """
+        Get the result of parsing
+        """
         raise NotImplementedError("Key Parser does not implement get_parse()")
 
     def reset(self):
+        """
+        Reset the parsing operation
+        """
         self.ready = True
         self.complete = False
 
     def deep_nest(self):
+        """
+        Print string with parenthesis for objects with high precedence
+        """
         return self.nest()
 
     def nest(self):
+        """
+        Print string with parenthesis for objects with low precedence
+        """
         return str(self)
 
     def __repr__(self):
@@ -181,7 +210,7 @@ class SequenceKeyParser(KeyParser):
         self.loc = 0
 
     def clone(self):
-        return SequenceKeyParser(*[ x.clone() for x in self.others ])
+        return SequenceKeyParser(*[x.clone() for x in self.others])
 
     def reset(self):
         KeyParser.reset(self)
@@ -193,7 +222,7 @@ class SequenceKeyParser(KeyParser):
         if not self.complete:
             return None
 
-        return self.filt([ x.get_parse() for x in self.others ])
+        return self.filt([x.get_parse() for x in self.others])
 
     def offer(self, key):
         if not self.ready:
@@ -238,7 +267,7 @@ class ChoiceKeyParser(KeyParser):
         KeyParser.__init__(self)
 
     def clone(self):
-        return ChoiceKeyParser(*[ x.clone() for x in self.others ])
+        return ChoiceKeyParser(*[x.clone() for x in self.others])
 
     def reset(self):
         KeyParser.reset(self)
@@ -296,6 +325,10 @@ def parse_key_expr(key_expr):
     macroed = False
 
     def quiesce():
+        """
+        Turn a series of key parsers an pipes on the stack into a choice of
+        sequences
+        """
         sequence = []
         choose = []
 
@@ -395,6 +428,10 @@ def key_macro(expr):
     expr = parse_key_expr(expr)
 
     def deco(func):
+        """
+        Decorator to capture the filter for the macro, from which we then take
+        our name
+        """
         expr.filt = func
         name = func.__name__
         parse_macros[name] = expr
