@@ -88,7 +88,9 @@ class UnitKeyParser(KeyParser):
         self.key = key
 
     def clone(self):
-        return UnitKeyParser(self.key)
+        ret = UnitKeyParser(self.key)
+        ret.filt = self.filt
+        return ret
 
     def offer(self, key):
         if not self.ready:
@@ -112,7 +114,9 @@ class PrintableKeyParser(KeyParser):
     A parser for printable keys
     """
     def clone(self):
-        return PrintableKeyParser()
+        ret = PrintableKeyParser()
+        ret.filt = self.filt
+        return ret
 
     def offer(self, key):
         if not self.ready:
@@ -139,7 +143,9 @@ class NumberKeyParser(KeyParser):
     A KeyParser that wants a number
     """
     def clone(self):
-        return NumberKeyParser()
+        ret = NumberKeyParser()
+        ret.filt = self.filt
+        return ret
 
     def offer(self, key):
         if not self.ready:
@@ -177,7 +183,9 @@ class OptionalKeyParser(KeyParser):
         KeyParser.__init__(self)
 
     def clone(self):
-        return OptionalKeyParser(self.other.clone())
+        ret = OptionalKeyParser(self.other.clone())
+        ret.filt = self.filt
+        return ret
 
     def offer(self, key):
         if not self.ready:
@@ -210,7 +218,9 @@ class SequenceKeyParser(KeyParser):
         self.loc = 0
 
     def clone(self):
-        return SequenceKeyParser(*[x.clone() for x in self.others])
+        ret = SequenceKeyParser(*[x.clone() for x in self.others])
+        ret.filt = self.filt
+        return ret
 
     def reset(self):
         KeyParser.reset(self)
@@ -267,7 +277,9 @@ class ChoiceKeyParser(KeyParser):
         KeyParser.__init__(self)
 
     def clone(self):
-        return ChoiceKeyParser(*[x.clone() for x in self.others])
+        ret = ChoiceKeyParser(*[x.clone() for x in self.others])
+        ret.filt = self.filt
+        return ret
 
     def reset(self):
         KeyParser.reset(self)
@@ -379,7 +391,6 @@ def parse_key_expr(key_expr):
                 raise InvalidKeyExpression("No such macro `"+stack[-1]+"`")
             macro = parse_macros[stack[-1]]
             stack[-1] = macro.clone()
-            stack[-1].filt = macro.filt
             macroed = False
         elif escaped or macroed:
             stack[-1] += k
