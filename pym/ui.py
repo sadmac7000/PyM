@@ -61,6 +61,7 @@ class UI(object):
         """
         Set the mode
         """
+        # pylint: disable=access-member-before-definition
         if hasattr(self, '_mode'):
             old_mode = self._mode
         else:
