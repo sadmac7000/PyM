@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
-from .mode import mode
 import os
+from pym import pym
 
 class NoFileNameError(Exception):
     """
@@ -232,7 +232,7 @@ class Buffer():
         position) may have a different set of legal values depending on mode,
         so this is the buffer's opportunity to correct.
         """
-        if mode().insert:
+        if pym.mode.insert:
             return
 
         if self.col < len(self.lines[self.row]):
@@ -253,15 +253,15 @@ class Buffer():
         if row >= len(self.lines):
             row = len(self.lines) - 1
 
-        if mode().insert and col > len(self.lines[row]) or (
-            not mode().insert and col >= len(self.lines[row])
+        if pym.mode.insert and col > len(self.lines[row]) or (
+            not pym.mode.insert and col >= len(self.lines[row])
                 ):
             self.col_want = col
             col = len(self.lines[row])
-            if not mode().insert:
+            if not pym.mode.insert:
                 col -= 1
 
-        if (not mode().insert) and col == len(self.lines[row]):
+        if (not pym.mode.insert) and col == len(self.lines[row]):
             col = len(self.lines[row]) - 1
 
         self.row = row

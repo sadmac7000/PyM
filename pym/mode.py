@@ -29,18 +29,6 @@ class StatusLineBuf:
         self.buf = ""
         self.pos = 0
 
-def mode(newmode = None):
-    """
-    Get the current PyM mode
-    """
-    global _mode
-
-    if newmode != None:
-        _mode = newmode
-        pym.buf.mode_changed()
-
-    return _mode
-
 class Mode():
     """
     The PyM mode determines everything about how the editor reacts to input
@@ -60,7 +48,7 @@ class Mode():
         Exit this mode, return to its abort mode
         """
         self.reset()
-        mode(self.abort_mode)
+        pym.mode = self.abort_mode
 
     def reset(self):
         """
@@ -106,7 +94,7 @@ class Mode():
             return func
         return decor
 
-_mode = normal = Mode(None)
+pym.mode = normal = Mode(None)
 normal.abort_mode = normal
 insert = Mode(normal, "-- INSERT --", insert=True)
 excmd = Mode(normal, '', 'sline')
@@ -178,7 +166,7 @@ def excmd_parse_exec(key):
 
     if len(data) == 0:
         sline.buf = ""
-        mode().abort()
+        pym.mode.abort()
         return
 
     match = re.match(excmd_pattern, data)
@@ -192,7 +180,7 @@ def excmd_parse_exec(key):
     else:
         pym.notify("Malformed command: " + data, error=True)
     sline.buf = ""
-    mode().abort()
+    pym.mode.abort()
     return
 
 @excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
@@ -209,7 +197,7 @@ def excmd_mode_keys(key):
 
         if sline.pos == 0:
             sline.buf = ""
-            mode().abort()
+            pym.mode.abort()
     elif key == 'delete':
         sline.buf = sline.buf[:sline.pos] + sline.buf[sline.pos+1:]
     elif key == 'left':

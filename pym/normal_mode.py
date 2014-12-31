@@ -16,7 +16,7 @@
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
 from pym import pym
-from .mode import normal, insert, excmd, mode
+from .mode import normal, insert, excmd
 from .key_parse import key_macro
 
 @key_macro("#?(h|j|k|l|<enter>)")
@@ -106,14 +106,14 @@ def normal_mode_to_command_mode(key):
     sline = pym.sline
     sline.buf = ':'
     sline.pos = 1
-    mode(excmd)
+    pym.mode = excmd
 
 @normal.handle('i|a|A')
 def normal_mode_to_insert_mode(key):
     """
     Key press handler for `i`, `a`, and `A` in normal mode
     """
-    mode(insert)
+    pym.mode = insert
     buf = pym.buf
     if key == 'A':
         buf.move_to(buf.row, len(buf.lines[buf.row]))

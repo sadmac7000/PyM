@@ -51,7 +51,10 @@ pym_init(UrwidUI())
 from pym import pym
 
 from .buf import Buffer
-from .mode import mode, StatusLineBuf, normal
+
+buf=Buffer()
+
+from .mode import StatusLineBuf, normal
 
 importlib.import_module(".commands", "pym")
 importlib.import_module(".normal_mode", "pym")
@@ -116,7 +119,7 @@ class BufferDisplay(urwid.Widget):
                 self.scroll_pos = "{}%".format(int(percent))
 
         # We do this late so the scroll calculations still happen
-        if mode().focus != "buffer":
+        if pym.mode.focus != "buffer":
             return None
         return (col,row)
 
@@ -155,7 +158,7 @@ class StatusLine(urwid.Widget):
         return 1
 
     def get_cursor_coords(self,size):
-        if mode().focus == 'sline':
+        if pym.mode.focus == 'sline':
             return (self.buf.pos, 0)
         return None
 
@@ -163,19 +166,19 @@ class StatusLine(urwid.Widget):
         global status_msg
         global status_err
 
-        if mode().focus == 'sline':
+        if pym.mode.focus == 'sline':
             content = self.buf.buf
             content += " " * (size[0] - len(content))
             content = content[:size[0]].encode()
             return urwid.TextCanvas([content], [[]], maxcol=size[0],
                     cursor=self.get_cursor_coords(size))
         content = " " * size[0]
-        if mode() != normal:
+        if pym.mode != normal:
             status_msg = None
         if status_msg != None:
             label = status_msg
         else:
-            label = mode().label
+            label = pym.mode.label
         content = label + content[len(label):]
         content = content[:-4] + bdisp.scroll_pos + " "
         content = content.encode()
@@ -191,7 +194,6 @@ class StatusLine(urwid.Widget):
         canv = urwid.TextCanvas([content], attr, maxcol=size[0])
         return canv
 
-buf=Buffer()
 bdisp = BufferDisplay(buf)
 sline = StatusLine()
 tabset = Tabset()
@@ -206,7 +208,7 @@ palette = [('tab', 'black,underline', 'light gray'),
 
 def do_input(key):
     "Input line handling"
-    mode().handle_key(key)
+    pym.mode.handle_key(key)
     bdisp._invalidate()
     sline._invalidate()
     tabset._invalidate()

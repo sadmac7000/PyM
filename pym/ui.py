@@ -44,3 +44,18 @@ class UI(object):
         Get the status line buffer
         """
         raise NotImplementedError("UI does not implement sline")
+
+    def get_mode(self):
+        """
+        Get the mode
+        """
+        return self._mode
+
+    def set_mode(self, mode):
+        """
+        Set the mode
+        """
+        self._mode = mode
+        self.buf.mode_changed()
+
+    mode = property(get_mode, set_mode, "The current editor mode")
