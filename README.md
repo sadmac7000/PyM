@@ -5,7 +5,7 @@ in, pure Python.
 
 ## Installation ##
 
-*PyM* is targeted at python 3. It requires
+*PyM* is targeted at Python 3. It requires
 [setuptools](https://pythonhosted.org/setuptools/) and can be installed in the
 usual manner:
 
