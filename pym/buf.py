@@ -94,6 +94,7 @@ class Motion(object):
         else:
             self.buf.move_to(*start)
         self.buf.col_want = col
+        self.buf.collapse_regions((row, col), end)
         self.buf.dirty = True
 
     def get_text(self):
@@ -130,6 +131,18 @@ class LineMotion(Motion):
     def execute(self):
         self.buf.move_to(self.target, self.buf.col_want)
 
+class Region(object):
+    """
+    A static region in a buffer. Usually used for things like hilighting or
+    folding.
+    """
+
+    def __init__(self, owner, tag, start, end):
+        self.owner = owner
+        self.tag = tag
+        self.start = start
+        self.end = end
+
 class Buffer(object):
     """
     A buffer stores a filesworth of text as a list of lines. It can generate
@@ -142,11 +155,27 @@ class Buffer(object):
         self.col = 0
         self.col_want = 0
         self.dirty = False
+        self.regions = []
 
         if path != None:
             self.load_file(path)
 
         self.markers = {}
+
+    def add_region(self, reg):
+        """
+        Add a region to the buffer
+        """
+        inserted = False
+
+        for i, other in enumerate(self.regions):
+            if other.start >= reg.start:
+                self.regions.insert(i, reg)
+                inserted = True
+                break
+
+        if not inserted:
+            self.regions.append(reg)
 
     def headline(self):
         """
@@ -198,26 +227,26 @@ class Buffer(object):
         elif self.path == None:
             raise NoFileNameError()
 
-        try:
-            os.stat(self.path)
-        except FileNotFoundError:
-            self.dirty = False
-            #TODO: Notify if the directory isn't there either
-            self.lines = ['']
-            return
-
         new_lines = []
 
-        with open(self.path, 'r') as f:
-            for line in f.readlines():
-                if line.endswith('\n'):
-                    line = line[:-1]
-                new_lines += [line]
+        try:
+            with open(self.path, 'r') as f:
+                for line in f.readlines():
+                    if line.endswith('\n'):
+                        line = line[:-1]
+                    new_lines += [line]
+        except FileNotFoundError:
+            #TODO: Notify if the directory isn't there either
+            pass
+
 
         if len(new_lines) == 0:
             self.lines = ['']
         else:
             self.lines = new_lines
+
+        self.regions = []
+        self.dirty = False
 
     def write_file(self, path=None):
         """
@@ -354,6 +383,45 @@ class Buffer(object):
 
         return Motion(self, (self.row, self.col), (line, col))
 
+    def expand_regions(self, start, end):
+        """
+        Expand regions to cover newly-inserted text
+        """
+        lines_added = end[0] - start[0]
+        cols_added = end[1] - start[1]
+
+        for reg in self.regions:
+            if reg.end > start:
+                reg.end = (reg.end[0] + lines_added, reg.end[1] + cols_added)
+
+            if reg.start > start:
+                reg.start = (reg.end[0] + lines_added, reg.end[1] + cols_added)
+
+    def collapse_regions(self, start, end):
+        """
+        Collapse regions that were surrounding deleted text
+        """
+        lines_removed = start[0] - end[0]
+        cols_removed = start[1] - end[1]
+
+        new_regions = []
+
+        for reg in self.regions:
+            if reg.end > end:
+                reg.end = (reg.end[0] - lines_removed, reg.end[1] - cols_removed)
+            elif reg.end > start:
+                reg.end = start
+
+            if reg.start > end:
+                reg.start = (reg.start[0] - lines_removed, reg.start[1] - cols_removed)
+            elif reg.start > start:
+                reg.start = start
+
+            if reg.start != reg.end:
+                new_regions.append(reg)
+
+        self.regions = new_regions
+
     def insert(self, data, row=None, col=None):
         """
         Insert new text at the given row and column. If the position is not
@@ -376,5 +444,6 @@ class Buffer(object):
         end_col = len(self.lines[end_row])
         self.lines[end_row] += postfix
         self.dirty = True
+        expand_regions((row, col), (end_row, end_col))
 
         return Motion(self, (row, col), (end_row, end_col))
