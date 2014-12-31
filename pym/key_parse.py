@@ -314,6 +314,49 @@ class InvalidKeyExpression(Exception):
 
 parse_macros = {}
 
+def quiesceSequence(sequence):
+    """
+    Turn a reversed sequence of key parsers into a SequenceKeyParser
+    """
+    if len(sequence) == 0:
+        raise InvalidKeyExpression("Empty choice")
+    sequence.reverse()
+
+    if len(sequence) > 1:
+        return [SequenceKeyParser(*sequence)]
+
+    if not isinstance(sequence[0], ChoiceKeyParser):
+        return sequence
+
+    k = list(sequence[0].others)
+    k.reverse()
+    return k
+
+def quiesce(stack):
+    """
+    Turn a series of key parsers and pipes on the stack into a choice of
+    sequences
+    """
+    sequence = []
+    choose = []
+
+    while len(stack) and stack[-1] != '(':
+        item = stack.pop()
+
+        if item == '|':
+            choose += quiesceSequence(sequence)
+            sequence = []
+        else:
+            sequence.append(item)
+
+    choose += quiesceSequence(sequence)
+    choose.reverse()
+
+    if len(choose) == 1:
+        return choose[0]
+
+    return ChoiceKeyParser(*choose)
+
 def parse_key_expr(key_expr):
     """
     Parse a key expression identifying sequences of keys that might trigger an
@@ -323,48 +366,6 @@ def parse_key_expr(key_expr):
     stack = []
     escaped = False
     macroed = False
-
-    def quiesce():
-        """
-        Turn a series of key parsers an pipes on the stack into a choice of
-        sequences
-        """
-        sequence = []
-        choose = []
-
-        while len(stack) and stack[-1] != '(':
-            item = stack.pop()
-
-            if item == '|':
-                if len(sequence) == 0:
-                    raise InvalidKeyExpression("Empty choice")
-                sequence.reverse()
-                if len(sequence) == 1:
-                    if isinstance(sequence[0], ChoiceKeyParser):
-                        k = list(sequence[0].others)
-                        k.reverse()
-                        choose += k
-                    else:
-                        choose.append(*sequence)
-                else:
-                    choose.append(SequenceKeyParser(*sequence))
-                sequence = []
-            else:
-                sequence.append(item)
-
-        if len(sequence) == 0:
-            raise InvalidKeyExpression("Empty choice")
-        sequence.reverse()
-        if len(sequence) == 1:
-            choose.append(*sequence)
-        else:
-            choose.append(SequenceKeyParser(*sequence))
-        choose.reverse()
-
-        if len(choose) == 1:
-            return choose[0]
-        else:
-            return ChoiceKeyParser(*choose)
 
     for k in key_expr:
         if k == ">" and not escaped:
@@ -401,7 +402,7 @@ def parse_key_expr(key_expr):
         elif k == "|" or k == "(":
             stack.append(k)
         elif k == ")":
-            res = quiesce()
+            res = quiesce(stack)
             if len(stack) == 0:
                 raise InvalidKeyExpression("Unmatched ')'")
             stack[-1] = res
@@ -414,7 +415,7 @@ def parse_key_expr(key_expr):
     if macroed:
         raise InvalidKeyExpression("Unmatched '<'")
 
-    ret = quiesce()
+    ret = quiesce(stack)
 
     if len(stack) == 0:
         return ret
