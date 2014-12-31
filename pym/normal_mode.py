@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
+from pym import pym
 from .mode import normal, insert, excmd, mode
 from .key_parse import key_macro
-from .ui import ui
 
 @key_macro("#?(h|j|k|l|<enter>)")
 def motion(key):
@@ -30,16 +30,16 @@ def motion(key):
         amt = 1
 
     if key == 'h':
-        return ui().buf.left_motion(amt)
+        return pym.buf.left_motion(amt)
 
     if key == 'l':
-        return ui().buf.right_motion(amt)
+        return pym.buf.right_motion(amt)
 
     if key == 'k':
-        return ui().buf.up_motion(amt)
+        return pym.buf.up_motion(amt)
 
     if key == 'j' or key == 'enter':
-        return ui().buf.down_motion(amt)
+        return pym.buf.down_motion(amt)
 
 @normal.handle('#?d(d|`motion`)')
 def normal_delete(keys):
@@ -52,7 +52,7 @@ def normal_delete(keys):
         count = 1
 
     if motion == 'd':
-        motion = ui().buf.down_motion(count - 1)
+        motion = pym.buf.down_motion(count - 1)
 
     motion.delete()
 
@@ -66,7 +66,7 @@ def normal_mode_mark(keys):
     if key == '`':
         key = "'"
 
-    ui().buf.mark(key)
+    pym.buf.mark(key)
 
 @normal.handle("('|<`>)@")
 def normal_mode_goto(keys):
@@ -78,7 +78,7 @@ def normal_mode_goto(keys):
     if key == '`':
         key = "'"
 
-    ui().buf.restore_mark(key)
+    pym.buf.restore_mark(key)
 
 @normal.handle("`motion`")
 def normal_mode_motion(motion):
@@ -96,14 +96,14 @@ def normal_delchar_key(key):
 
     if count == None:
         count = 1
-    ui().buf.right_motion(count).delete()
+    pym.buf.right_motion(count).delete()
 
 @normal.handle(':')
 def normal_mode_to_command_mode(key):
     """
     Key press handler for `:` in normal mode
     """
-    sline = ui().sline
+    sline = pym.sline
     sline.buf = ':'
     sline.pos = 1
     mode(excmd)
@@ -114,7 +114,7 @@ def normal_mode_to_insert_mode(key):
     Key press handler for `i`, `a`, and `A` in normal mode
     """
     mode(insert)
-    buf = ui().buf
+    buf = pym.buf
     if key == 'A':
         buf.move_to(buf.row, len(buf.lines[buf.row]))
     elif key == 'a':

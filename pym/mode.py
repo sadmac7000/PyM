@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
-from .ui import ui
+from pym import pym
 from .key_parse import parse_key_expr
 import re
 import os
@@ -37,7 +37,7 @@ def mode(newmode = None):
 
     if newmode != None:
         _mode = newmode
-        ui().buf.mode_changed()
+        pym.buf.mode_changed()
 
     return _mode
 
@@ -118,7 +118,7 @@ def insert_mode_keys(key):
     inserts them in the buffer.
     """
 
-    buf = ui().buf
+    buf = pym.buf
 
     if key == 'backspace':
         buf.left_motion().delete()
@@ -146,7 +146,7 @@ def excmd_tab_complete(key):
     """
     global excmds
 
-    sline = ui().sline
+    sline = pym.sline
     data = sline.buf[1:sline.pos].lstrip()
 
     if len(data) == 0:
@@ -173,7 +173,7 @@ def excmd_tab_complete(key):
 
 @excmd.handle('<enter>')
 def excmd_parse_exec(key):
-    sline = ui().sline
+    sline = pym.sline
     data = sline.buf[1:].strip()
 
     if len(data) == 0:
@@ -188,9 +188,9 @@ def excmd_parse_exec(key):
         if len(args) == 0:
             args = None
         if not do_excmd(cmd, args):
-            ui().notify("Not an editor command: " + cmd, error=True)
+            pym.notify("Not an editor command: " + cmd, error=True)
     else:
-        ui().notify("Malformed command: " + data, error=True)
+        pym.notify("Malformed command: " + data, error=True)
     sline.buf = ""
     mode().abort()
     return
@@ -201,7 +201,7 @@ def excmd_mode_keys(key):
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.
     """
-    sline = ui().sline
+    sline = pym.sline
 
     if key == 'backspace':
         sline.pos -= 1

@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
+from pym import pym
 from .mode import excommand
-from .ui import ui
 from .buf import NoFileNameError
 from glob import glob
 import os
@@ -32,25 +32,25 @@ def file_tab_complete(string):
 @excommand("quit")
 def quitcmd(args):
     if args == None:
-        ui().quit()
-    ui().notify("Trailing characters", error=True)
+        pym.quit()
+    pym.notify("Trailing characters", error=True)
 
 @excommand("edit", file_tab_complete)
 def editcmd(args):
     try:
-        ui().buf.loadfile(args)
+        pym.buf.loadfile(args)
     except NoFileNameError:
-        ui().notify("No File Name", error=True)
+        pym.notify("No File Name", error=True)
     except PermissionError:
-        ui().notify("Permission denied", error=True)
+        pym.notify("Permission denied", error=True)
 
 @excommand("write", file_tab_complete)
 def writecmd(args):
     try:
-        ui().buf.writefile(args)
+        pym.buf.writefile(args)
     except NoFileNameError:
-        ui().notify("No File Name", error=True)
+        pym.notify("No File Name", error=True)
     except PermissionError:
-        ui().notify("Permission denied", error=True)
+        pym.notify("Permission denied", error=True)
     except FileNotFoundError:
-        ui().notify("No Such File or Directory", error=True)
+        pym.notify("No Such File or Directory", error=True)

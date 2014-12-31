@@ -15,6 +15,21 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
+pym = None
+
+class PymInitError(Exception):
+    """
+    Exception raised when we try to set the UI twice
+    """
+    pass
+
+def pym_init(ui):
+    global pym
+
+    if pym != None:
+        raise PymInitError("Attempt to initialize PyM twice")
+    pym = ui
+
 from pym import urwid_ui
 from pym import buf
 from pym import mode

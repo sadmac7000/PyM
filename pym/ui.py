@@ -44,19 +44,3 @@ class UI(object):
         Get the status line buffer
         """
         raise NotImplementedError("UI does not implement sline")
-
-_ui = None
-
-class UIOverrideError(Exception):
-    """
-    Exception raised when we try to set the UI twice
-    """
-    pass
-
-def ui(newUI = None):
-    global _ui
-    if newUI != None:
-        if _ui != None:
-            raise UIOverrideError("UI can only be set once")
-        _ui = newUI
-    return _ui
