@@ -21,9 +21,11 @@ Standard bindings for normal mode
 
 from pym import pym
 from .mode import normal, insert, excmd
-from .key_parse import key_macro
+from .key_parse import KeyGroup
 
-@key_macro("#?(h|j|k|l|<enter>| |<backspace>)")
+motionGroup = KeyGroup('motion')
+
+@motionGroup.add("#?(h|j|k|l|<enter>| |<backspace>)")
 def motion(key):
     """
     Generic key press receiver for motion keys

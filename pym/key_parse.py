@@ -449,3 +449,28 @@ def key_macro(expr):
         parse_macros[name] = expr
         return func
     return deco
+
+class KeyGroup(object):
+    """
+    A key group defines a key macro that can be appended to over time
+    """
+
+    def __init__(self, name):
+        self.parser = ChoiceKeyParser()
+        self.parser.others = []
+        parse_macros[name] = self.parser
+
+    def add(self, expr):
+        """
+        Add a new expression to this group
+        """
+        expr = parse_key_expr(expr)
+        self.parser.others.append(expr)
+
+        def deco(func):
+            """
+            Decorator to capture the filter function
+            """
+            expr.filt = func
+            return func
+        return deco
