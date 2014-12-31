@@ -217,6 +217,9 @@ class Buffer():
         if path == None:
             raise NoFileNameError()
 
+        if self.path == None:
+            self.path = path
+
         with open(path, "wb") as f:
             f.write(("\n".join(self.lines)+"\n").encode())
 
