@@ -239,7 +239,7 @@ class Buffer(object):
         if os.path.samefile(path, self.path):
             self.dirty = False
 
-    def mode_changed(self):
+    def mode_changed(self, old_mode):
         """
         Notify this buffer of a mode change. Some of its state (i.e. the cursor
         position) may have a different set of legal values depending on mode,
@@ -248,7 +248,8 @@ class Buffer(object):
         if pym.mode.insert:
             return
 
-        if self.col < len(self.lines[self.row]):
+        if self.col < len(self.lines[self.row]) and \
+                (old_mode == None or not old_mode.insert):
             return
 
         if self.col == 0:

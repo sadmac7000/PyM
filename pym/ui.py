@@ -61,7 +61,11 @@ class UI(object):
         """
         Set the mode
         """
+        if hasattr(self, '_mode'):
+            old_mode = self._mode
+        else:
+            old_mode = None
         self._mode = mode
-        self.buf.mode_changed()
+        self.buf.mode_changed(old_mode)
 
     mode = property(get_mode, set_mode, "The current editor mode")
