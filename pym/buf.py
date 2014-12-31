@@ -330,6 +330,29 @@ class Buffer(object):
 
         return Motion(self, (self.row, self.col), (line, col))
 
+    def backward_motion(self, count=1):
+        """
+        Get a motion that moves the cursor left by the given number of
+        columns. If we reach the end of the line, we count skipping to the
+        previous line as one column.
+        """
+
+        col = self.col
+        line = self.row
+
+        while line > 0 and col < count:
+            count -= col
+            count -= 1
+            line -= 1
+            col = len(self.lines[line]) - 1
+
+        if col < count:
+            col = 0
+        else:
+            col -= count
+
+        return Motion(self, (self.row, self.col), (line, col))
+
     def insert(self, data, row=None, col=None):
         """
         Insert new text at the given row and column. If the position is not
