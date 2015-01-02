@@ -137,14 +137,62 @@ class BufferDisplay(urwid.Widget):
         """
         Render this widget
         """
-        lines = [x[:size[0]] for x in self.buf.encoded(self.scroll)][:size[1]]
-        attrs = [[] for x in range(len(lines))]
+        encoded = [line_attrs(x + self.scroll, size[0]) for x in range(size[1])]
+        encoded = [x for x in encoded if x != None]
+        lines = [x[0] for x in encoded]
+        attrs = [x[1] for x in encoded]
         if len(lines) < size[1]:
             attrs += [[('nonline', 1)]] * (size[1]-len(lines))
             lines += [b"~"] * (size[1]-len(lines))
         return urwid.TextCanvas(lines, attrs,
                                 cursor=self.get_cursor_coords(size),
                                 maxcol=size[0])
+
+def line_attrs(num, truncate):
+    """
+    Given a line number, truncate it to fit the screen, encode it, and return
+    the tuple of its encoded text and its attrs
+    """
+
+    if num >= len(pym.buf.lines):
+        return None
+
+    attrs = []
+    line = pym.buf.lines[num][:truncate]
+    regions = pym.buf.regions_for_line(num)
+    end = 0
+    start = len(line)
+
+    for reg in regions:
+        if reg.start[0] < num:
+            start = 0
+        elif reg.start[1] < start:
+            start = reg.start[1]
+
+        if reg.end[0] > num:
+            end = len(line)
+        elif reg.end[1] > end:
+            end = reg.end[1]
+
+    real_end = end
+    real_start = start
+    encoded_line = "".encode()
+
+    for pos, char in enumerate(line):
+        encoded_char = char.encode()
+
+        if pos < start:
+            real_start += len(encoded_char) - 1
+        if pos < end:
+            real_end += len(encoded_char) - 1
+        encoded_line += encoded_char
+
+    if end > start:
+        if real_start > 0:
+            attrs.append((None, real_start))
+        attrs.append(('hilight', real_end - real_start))
+
+    return (encoded_line, attrs)
 
 class Tabset(urwid.Widget):
     "Urwid widget for the tab bar at the top of the screen"
@@ -230,6 +278,7 @@ layout = urwid.Pile([(1, tabset), bdisp, (1, sline)])
 
 palette = [('tab', 'black,underline', 'light gray'),
            ('tabspace', 'black', 'light gray', '', 'h8', 'g74'),
+           ('hilight', 'black', 'yellow', '', 'black', 'h11'),
            ('modelabel', 'white,bold', ''),
            ('errlabel', 'white,bold', 'dark red'),
            ('nonline', 'dark blue', '')]

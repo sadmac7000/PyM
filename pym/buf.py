@@ -191,6 +191,12 @@ class Buffer(object):
 
         return dirty_marker + os.path.relpath(self.path)
 
+    def regions_for_line(self, line):
+        """
+        Get the regions affecting a line
+        """
+        return [x for x in self.regions if x.start[0] <= line and x.end[0] >= line]
+
     def mark(self, char="'"):
         """
         Store a mark position which can be returned to. We use the current
@@ -207,15 +213,6 @@ class Buffer(object):
             self.move_to(*self.markers[char])
             return True
         return False
-
-    def encoded(self, start=0, end=None):
-        """
-        Get the contents of this buffer as a list of lines which have been
-        encoded as UTF-8 bytes objects.
-        """
-        if end == None:
-            end = len(self.lines)
-        return [x.encode() for x in self.lines[start:end]]
 
     def load_file(self, path=None):
         """
@@ -391,36 +388,42 @@ class Buffer(object):
         cols_added = end[1] - start[1]
 
         for reg in self.regions:
+            newcol = reg.end[1]
             if reg.end > start:
-                reg.end = (reg.end[0] + lines_added, reg.end[1] + cols_added)
+                if reg.end[0] == start[0]:
+                    newcol += cols_added
+                reg.end = (reg.end[0] + lines_added, newcol)
 
             if reg.start > start:
-                reg.start = (reg.end[0] + lines_added, reg.end[1] + cols_added)
+                newcol = reg.start[1]
+                if reg.start[0] == start[0]:
+                    newcol += cols_added
+                reg.start = (reg.start[0] + lines_added, newcol)
 
     def collapse_regions(self, start, end):
         """
         Collapse regions that were surrounding deleted text
         """
-        lines_removed = start[0] - end[0]
-        cols_removed = start[1] - end[1]
-
-        new_regions = []
-
         for reg in self.regions:
-            if reg.end > end:
-                reg.end = (reg.end[0] - lines_removed, reg.end[1] - cols_removed)
-            elif reg.end > start:
-                reg.end = start
-
-            if reg.start > end:
-                reg.start = (reg.start[0] - lines_removed, reg.start[1] - cols_removed)
-            elif reg.start > start:
+            if reg.start >= end:
+                newcol = reg.start[1]
+                if reg.start[0] == end[0]:
+                    newcol -= end[1]
+                    if start[0] == end[0]:
+                        newcol += start[1]
+                reg.start = (reg.start[0] - end[0] + start[0], newcol)
+            elif reg.start >= start:
                 reg.start = start
 
-            if reg.start != reg.end:
-                new_regions.append(reg)
-
-        self.regions = new_regions
+            if reg.end >= end:
+                newcol = reg.end[1]
+                if reg.end[0] == end[0]:
+                    newcol -= end[1]
+                    if start[0] == end[0]:
+                        newcol += start[1]
+                reg.end = (reg.end[0] - end[0] + start[0], newcol)
+            elif reg.end >= start:
+                reg.end = start
 
     def insert(self, data, row=None, col=None):
         """
@@ -444,6 +447,6 @@ class Buffer(object):
         end_col = len(self.lines[end_row])
         self.lines[end_row] += postfix
         self.dirty = True
-        expand_regions((row, col), (end_row, end_col))
+        self.expand_regions((row, col), (end_row, end_col))
 
         return Motion(self, (row, col), (end_row, end_col))
