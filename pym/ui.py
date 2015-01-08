@@ -69,4 +69,10 @@ class UI(object):
         self._mode = mode
         self.buf.mode_changed(old_mode)
 
+    def redraw(self):
+        """
+        Redraw the screen
+        """
+        pass
+
     mode = property(get_mode, set_mode, "The current editor mode")

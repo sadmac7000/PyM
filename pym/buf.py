@@ -22,6 +22,9 @@ Handling for text buffers. This is the core of the editor.
 """
 
 import os
+import re
+from operator import attrgetter
+
 from pym import pym
 
 class NoFileNameError(Exception):
@@ -48,6 +51,7 @@ class Motion(object):
         """
         self.buf.move_to(*self.end)
         self.buf.col_want = self.end[1]
+        pym.redraw()
 
     def ordered_coords(self):
         """
@@ -130,6 +134,23 @@ class LineMotion(Motion):
 
     def execute(self):
         self.buf.move_to(self.target, self.buf.col_want)
+        pym.redraw()
+
+"A motion that goes nowhere"
+class NullMotion(Motion):
+    def __init__(self):
+        pass
+
+    def execute(self):
+        pass
+
+    def delete(self):
+        pass
+
+    def get_text(self):
+        return ""
+
+NULL_MOTION = NullMotion()
 
 class Region(object):
     """
@@ -156,6 +177,8 @@ class Buffer(object):
         self.col_want = 0
         self.dirty = False
         self.regions = []
+        self.search_expr = None
+        self.search_backward = False
 
         if path != None:
             self.load_file(path)
@@ -195,7 +218,18 @@ class Buffer(object):
         """
         Get the regions affecting a line
         """
-        return [x for x in self.regions if x.start[0] <= line and x.end[0] >= line]
+        regions = [x for x in self.regions if x.start[0] <= line and x.end[0] >= line]
+
+        if self.search_expr == None:
+            return regions
+
+        for k in self.search_expr.finditer(self.lines[line]):
+            regions.append(Region(None, 'search', (line, k.start()), (line,
+                k.end())))
+
+        regions.sort(key=attrgetter('start'))
+
+        return regions
 
     def mark(self, char="'"):
         """
@@ -210,7 +244,9 @@ class Buffer(object):
         method.
         """
         if char in self.markers:
-            self.move_to(*self.markers[char])
+            tgt = self.markers[char]
+            self.mark()
+            self.move_to(*tgt)
             return True
         return False
 
@@ -399,6 +435,123 @@ class Buffer(object):
                 if reg.start[0] == start[0]:
                     newcol += cols_added
                 reg.start = (reg.start[0] + lines_added, newcol)
+
+    def forward_search(self, start_pos=None):
+        """
+        Get the linearly next matching search position
+        """
+        if start_pos == None:
+            start_pos = (self.row, self.col)
+
+        row, col = start_pos
+
+        if self.search_expr == None:
+            return NULL_MOTION
+
+        match = self.search_expr.search(self.lines[row], col + 1)
+
+        if match != None:
+            return Motion(self, (self.row, self.col), (row, match.start()))
+
+        stop_row = row
+        row = row + 1
+        if row >= len(self.lines):
+            row = 0
+
+        while row != stop_row:
+            if row >= len(self.lines):
+                row = 0
+
+            match = self.search_expr.search(self.lines[row])
+
+            if match == None:
+                row += 1
+                continue
+
+            start, end = match.span()
+
+            if start == end:
+                row += 1
+                continue
+            return Motion(self, (self.row, self.col), (row, start))
+
+        return NULL_MOTION
+
+    def backward_search(self, start_pos=None):
+        """
+        Get the linearly next matching search position
+        """
+        if start_pos == None:
+            start_pos = (self.row, self.col)
+
+        row, col = start_pos
+
+        if self.search_expr == None:
+            return NULL_MOTION
+
+        match = None
+
+        for m in self.search_expr.finditer(self.lines[row]):
+            if m.start() < col and m.start() != m.end():
+                match = m
+            elif m.start() >= col:
+                break
+
+        if match != None:
+            return Motion(self, (self.row, self.col), (row, match.start()))
+
+        stop_row = row
+        row = row - 1
+
+        if row < 0:
+            row = len(self.lines) - 1
+
+        while row != stop_row:
+            if row < 0:
+                row = len(self.lines) - 1
+
+            match = None
+
+            for match in self.search_expr.finditer(self.lines[row]):
+                pass
+
+            if match == None:
+                row -= 1
+                continue
+
+            start, end = match.span()
+
+            if start != end:
+                return Motion(self, (self.row, self.col), (row, start))
+
+            row -= 1
+
+        return NULL_MOTION
+
+    def next_search(self, pos=None):
+        """
+        Get the next match by the direction specified for the search
+        """
+        if self.search_backward:
+            return self.backward_search(pos)
+        else:
+            return self.forward_search(pos)
+
+    def prev_search(self, pos=None):
+        """
+        Get the previos match by the direction specified for the search
+        """
+        if self.search_backward:
+            return self.forward_search(pos)
+        else:
+            return self.backward_search(pos)
+
+    def search(self, expr, backward):
+        """
+        Set the search variable
+        """
+        self.search_expr= re.compile(expr)
+        self.search_backward = backward
 
     def collapse_regions(self, start, end):
         """

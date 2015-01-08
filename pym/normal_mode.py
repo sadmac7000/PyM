@@ -20,7 +20,7 @@ Standard bindings for normal mode
 """
 
 from pym import pym
-from .mode import normal, insert, excmd
+from .mode import normal, insert, excmd, search, backsearch
 from .key_parse import KeyGroup
 
 motionGroup = KeyGroup('motion')
@@ -52,6 +52,20 @@ def motion(key):
 
     if key == 'backspace':
         return pym.buf.backward_motion(amt)
+
+@motionGroup.add('#?(n|N)')
+def search_motion(keys):
+    times = keys[0]
+    backward = keys[1] == 'N'
+
+    if times == None:
+        times = 1
+
+    for _ in range(times):
+        if backward:
+            return pym.buf.prev_search()
+        else:
+            return pym.buf.next_search()
 
 @normal.handle('#?d(d|`motion`)')
 def normal_delete(keys):
@@ -109,6 +123,26 @@ def normal_delchar_key(key):
     if count == None:
         count = 1
     pym.buf.right_motion(count).delete()
+
+@normal.handle('/')
+def normal_mode_to_search_mode(_):
+    """
+    Key press handler for `:` in normal mode
+    """
+    sline = pym.sline
+    sline.buf = '/'
+    sline.pos = 1
+    pym.mode = search
+
+@normal.handle('<?>')
+def normal_mode_to_back_search_mode(_):
+    """
+    Key press handler for `:` in normal mode
+    """
+    sline = pym.sline
+    sline.buf = '?'
+    sline.pos = 1
+    pym.mode = backsearch
 
 @normal.handle(':')
 def normal_mode_to_command_mode(_):

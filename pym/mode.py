@@ -110,6 +110,8 @@ pym.mode = normal = Mode(None)
 normal.abort_mode = normal
 insert = Mode(normal, "-- INSERT --", insert=True)
 excmd = Mode(normal, '', 'sline')
+search = Mode(normal, '', 'sline')
+backsearch = Mode(normal, '', 'sline')
 
 @insert.handle("@|<backspace>|<delete>|<enter>|<left>|<right>|<up>|<down>")
 def insert_mode_keys(key):
@@ -197,8 +199,30 @@ def excmd_parse_exec(_):
     pym.mode.abort()
     return
 
-@excmd.handle('@|<delete>|<backspace>|<left>|<right>|<enter>')
-def excmd_mode_keys(key):
+@search.handle('<enter>')
+def forward_search(_):
+    """
+    Handle a forward search request
+    """
+    pym.buf.search(pym.sline.buf[1:], False)
+    pym.buf.mark()
+    pym.buf.next_search().execute()
+    pym.mode.abort()
+
+@backsearch.handle('<enter>')
+def backward_search(_):
+    """
+    Handle a backward search request
+    """
+    pym.buf.search(pym.sline.buf[1:], True)
+    pym.buf.mark()
+    pym.buf.next_search().execute()
+    pym.mode.abort()
+
+@excmd.handle('@|<delete>|<backspace>|<left>|<right>')
+@search.handle('@|<delete>|<backspace>|<left>|<right>')
+@backsearch.handle('@|<delete>|<backspace>|<left>|<right>')
+def status_line_entry(key):
     """
     Command mode key handler. Mostly this just passes keys through to the
     status line buffer.

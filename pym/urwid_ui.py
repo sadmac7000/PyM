@@ -32,6 +32,10 @@ class UrwidUI(UI):
     """
     The Urwid UI class
     """
+    def __init__(self):
+        UI.__init__(self)
+        self.loop = None
+        self.bdisp = None
 
     def quit(self):
         raise urwid.ExitMainLoop()
@@ -41,6 +45,10 @@ class UrwidUI(UI):
         global status_err
         status_msg = message
         status_err = error
+
+    def redraw(self):
+        self.bdisp._invalidate()
+        self.loop.draw_screen()
 
     @property
     def buf(self):
@@ -68,7 +76,7 @@ def sigint(*_):
     Handler for SIGINT. Passes Ctrl-c to the editor
     """
     do_input("ctrl c")
-    loop.draw_screen()
+    pym.loop.draw_screen()
 
 signal.signal(signal.SIGINT, sigint)
 
@@ -112,6 +120,7 @@ class BufferDisplay(urwid.Widget):
             self.scroll = 0
 
         if self.scroll != old_scroll:
+            self._invalidate()
             status_msg = None
 
         row = self.buf.row - self.scroll
@@ -157,40 +166,52 @@ def line_attrs(num, truncate):
     if num >= len(pym.buf.lines):
         return None
 
-    attrs = []
     line = pym.buf.lines[num][:truncate]
     regions = pym.buf.regions_for_line(num)
-    end = 0
-    start = len(line)
 
+    attr_endpoints = []
     for reg in regions:
         if reg.start[0] < num:
             start = 0
-        elif reg.start[1] < start:
+        else:
             start = reg.start[1]
 
         if reg.end[0] > num:
             end = len(line)
-        elif reg.end[1] > end:
+        else:
             end = reg.end[1]
 
-    real_end = end
-    real_start = start
-    encoded_line = "".encode()
+        attr_endpoints.append([start, end, start, end])
 
+    offset = 0
+    encoded_line = "".encode()
+    attr_ep_pos = 0
     for pos, char in enumerate(line):
         encoded_char = char.encode()
-
-        if pos < start:
-            real_start += len(encoded_char) - 1
-        if pos < end:
-            real_end += len(encoded_char) - 1
         encoded_line += encoded_char
+        offset += len(encoded_char) - 1
 
-    if end > start:
-        if real_start > 0:
-            attrs.append((None, real_start))
-        attrs.append(('hilight', real_end - real_start))
+        if attr_ep_pos >= len(attr_endpoints):
+            continue
+
+        for ep in attr_endpoints:
+            if ep[0] > pos:
+                ep[2] = ep[0] + offset
+            if ep[1] > pos:
+                ep[3] = ep[1] + offset
+
+    for ep in attr_endpoints:
+        ep.pop(0)
+        ep.pop(0)
+
+    pos = 0
+
+    attrs = []
+    for ep in attr_endpoints:
+        if ep[0] > pos:
+            attrs.append((None, ep[0] - pos))
+        pos = ep[1]
+        attrs.append(('hilight', ep[1] - ep[0]))
 
     return (encoded_line, attrs)
 
@@ -290,11 +311,12 @@ def do_input(key):
     sline._invalidate()
     tabset._invalidate()
 
-loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
+pym.loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
+pym.bdisp = bdisp
 
 def run():
     """
     Main looop for the Urwid UI
     """
-    loop.screen.set_terminal_properties(colors=256)
-    loop.run()
+    pym.loop.screen.set_terminal_properties(colors=256)
+    pym.loop.run()
