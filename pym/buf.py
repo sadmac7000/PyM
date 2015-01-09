@@ -23,7 +23,9 @@ Handling for text buffers. This is the core of the editor.
 
 import os
 import re
+import magic
 from operator import attrgetter
+from .filetypes import plain_text, file_type_for_mime
 
 from pym import pym
 
@@ -179,6 +181,7 @@ class Buffer(object):
         self.regions = []
         self.search_expr = None
         self.search_backward = False
+        self.file_type = plain_text
 
         if path != None:
             self.load_file(path)
@@ -268,10 +271,13 @@ class Buffer(object):
                     if line.endswith('\n'):
                         line = line[:-1]
                     new_lines += [line]
+
+                mimetype = magic.from_file(self.path, mime=True)
         except FileNotFoundError:
             #TODO: Notify if the directory isn't there either
             pass
 
+        self.file_type = file_type_for_mime(mimetype)
 
         if len(new_lines) == 0:
             self.lines = ['']
@@ -286,6 +292,8 @@ class Buffer(object):
         Write the contents of this buffer to a file. If no path is given, use
         the last known location.
         """
+        do_mime = False
+
         if path == None:
             path = self.path
 
@@ -293,6 +301,7 @@ class Buffer(object):
             raise NoFileNameError()
 
         if self.path == None:
+            do_mime = True
             self.path = path
 
         with open(path, "wb") as f:
@@ -300,6 +309,7 @@ class Buffer(object):
 
         if os.path.samefile(path, self.path):
             self.dirty = False
+
 
     def mode_changed(self, old_mode):
         """

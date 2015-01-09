@@ -16,12 +16,13 @@
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import setup, find_packages
+
 setup(
     name = "PyM",
     version = "0.0.1",
     packages = find_packages(),
 
-    install_requires = ['urwid>=1.2.0'],
+    install_requires = ['urwid>=1.2.0', 'python-magic'],
 
     # metadata for upload to PyPI
     description = "A Vi-like editor written in python",
