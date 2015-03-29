@@ -17,12 +17,27 @@
 
 # pylint: disable=too-few-public-methods
 
+import ast
+from pym import pym
+from pym.buf import Region
+
 class FileType(object):
-    pass
+    def load(self, buf):
+        pass
 
 MIME_DICT = {}
 
 plain_text = FileType()
+
+class PythonFileType(FileType):
+    def load(self, buf):
+        self.ast = ast.parse(buf.dump_text())
+        for node in ast.walk(self.ast):
+            if isinstance(node, ast.FunctionDef):
+                buf.add_region(Region(None, 'keyword', (node.lineno - 1,
+                    node.col_offset), (node.lineno, node.col_offset)))
+
+MIME_DICT['text/x-python'] = PythonFileType()
 
 def file_type_for_mime(mime):
     if mime in MIME_DICT:

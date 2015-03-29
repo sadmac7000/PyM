@@ -25,7 +25,6 @@ import os
 import re
 import magic
 from operator import attrgetter
-from .filetypes import plain_text, file_type_for_mime
 
 from pym import pym
 
@@ -160,12 +159,19 @@ class Region(object):
     folding.
     """
 
-    def __init__(self, owner, tag, start, end):
-        self.owner = owner
+    def __init__(self, update_cb, tag, start, end):
+        self.update_cb = update_cb
         self.tag = tag
         self.start = start
         self.end = end
 
+    def update(self):
+        "Notify our creator of an update"
+        if self.update_cb == None:
+            return True
+        return self.update_cb()
+
+from .filetypes import plain_text, file_type_for_mime
 class Buffer(object):
     """
     A buffer stores a filesworth of text as a list of lines. It can generate
@@ -227,7 +233,7 @@ class Buffer(object):
             return regions
 
         for k in self.search_expr.finditer(self.lines[line]):
-            regions.append(Region(None, 'search', (line, k.start()), (line,
+            regions.append(Region(None, 'hilight', (line, k.start()), (line,
                 k.end())))
 
         regions.sort(key=attrgetter('start'))
@@ -272,7 +278,7 @@ class Buffer(object):
                         line = line[:-1]
                     new_lines += [line]
 
-                mimetype = magic.from_file(self.path, mime=True)
+                mimetype = magic.from_file(self.path, mime=True).decode("utf-8")
         except FileNotFoundError:
             #TODO: Notify if the directory isn't there either
             pass
@@ -286,6 +292,13 @@ class Buffer(object):
 
         self.regions = []
         self.dirty = False
+        self.file_type.load(self)
+
+    def dump_text(self):
+        """
+        Dump the text of this buffer
+        """
+        return "\n".join(self.lines)+"\n"
 
     def write_file(self, path=None):
         """
@@ -305,7 +318,7 @@ class Buffer(object):
             self.path = path
 
         with open(path, "wb") as f:
-            f.write(("\n".join(self.lines)+"\n").encode())
+            f.write(self.dump_text().encode())
 
         if os.path.samefile(path, self.path):
             self.dirty = False

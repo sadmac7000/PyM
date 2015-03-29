@@ -181,7 +181,7 @@ def line_attrs(num, truncate):
         else:
             end = reg.end[1]
 
-        attr_endpoints.append([start, end, start, end])
+        attr_endpoints.append([start, end, start, end, reg.tag])
 
     offset = 0
     encoded_line = "".encode()
@@ -211,7 +211,8 @@ def line_attrs(num, truncate):
         if ep[0] > pos:
             attrs.append((None, ep[0] - pos))
         pos = ep[1]
-        attrs.append(('hilight', ep[1] - ep[0]))
+        if ep[1] != ep[0]:
+            attrs.append((ep[2], ep[1] - ep[0]))
 
     return (encoded_line, attrs)
 
@@ -300,6 +301,7 @@ layout = urwid.Pile([(1, tabset), bdisp, (1, sline)])
 palette = [('tab', 'black,underline', 'light gray'),
            ('tabspace', 'black', 'light gray', '', 'h8', 'g74'),
            ('hilight', 'black', 'yellow', '', 'black', 'h11'),
+           ('keyword', 'dark magenta', ''),
            ('modelabel', 'white,bold', ''),
            ('errlabel', 'white,bold', 'dark red'),
            ('nonline', 'dark blue', '')]
