@@ -182,7 +182,20 @@ def line_attrs(num, truncate):
         else:
             end = reg.end[1]
 
-        attr_endpoints.append([start, end, start, end, reg.tag])
+        if len(attr_endpoints):
+            next_end = attr_endpoints[-1][1]
+        else:
+            next_end = None
+
+        if next_end == None or next_end <= start:
+            attr_endpoints.append([start, end, start, end, reg.tag])
+        else:
+            attr_endpoints[-1][1] = start
+            attr_endpoints[-1][3] = start
+            prev_tag = attr_endpoints[-1][4]
+            attr_endpoints.append([start, end, start, end, reg.tag])
+            if next_end > end:
+                attr_endpoints.append([end, next_end, end, next_end, prev_tag])
 
     offset = 0
     encoded_line = "".encode()
