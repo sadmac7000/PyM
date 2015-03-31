@@ -305,6 +305,18 @@ class Buffer(object):
         else:
             self.lines = new_lines
 
+        redraw = False
+        if len(self.lines) <= self.row:
+            self.row = len(self.lines) - 1
+            redraw = True
+
+        if len(self.lines[self.row]) <= self.col:
+            self.col = len(self.lines[self.row]) - 1
+            redraw = True
+
+        if redraw:
+            pym.redraw()
+
         self.regions = []
         self.dirty = False
         self.file_type.load(self)
