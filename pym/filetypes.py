@@ -22,6 +22,7 @@ File type support
 """
 
 import ast
+from pym.buf import Region
 
 class FileType(object):
     """
