@@ -137,8 +137,9 @@ class LineMotion(Motion):
         self.buf.move_to(self.target, self.buf.col_want)
         pym.redraw()
 
-"A motion that goes nowhere"
 class NullMotion(Motion):
+    "A motion that goes nowhere"
+
     def __init__(self):
         pass
 
@@ -233,8 +234,8 @@ class Buffer(object):
             return regions
 
         for k in self.search_expr.finditer(self.lines[line]):
-            regions.append(Region(None, 'hilight', (line, k.start()), (line,
-                k.end())))
+            regions.append(Region(None, 'hilight', (line, k.start()),
+                (line, k.end())))
 
         regions.sort(key=attrgetter('start'))
 
@@ -322,7 +323,6 @@ class Buffer(object):
 
         if os.path.samefile(path, self.path):
             self.dirty = False
-
 
     def mode_changed(self, old_mode):
         """
@@ -573,7 +573,7 @@ class Buffer(object):
         """
         Set the search variable
         """
-        self.search_expr= re.compile(expr)
+        self.search_expr = re.compile(expr)
         self.search_backward = backward
 
     def collapse_regions(self, start, end):

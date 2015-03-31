@@ -319,11 +319,6 @@ palette = [('tab', 'black,underline', 'light gray'),
            ('errlabel', 'white,bold', 'dark red'),
            ('nonline', 'dark blue', '')]
 
-def urwid_text_color(pym_color):
-    "Get an urwid palette entry for a PyM color"
-    return pym_color
-    pym_color = resolve_text_color(pym_color)
-
 def do_input(key):
     "Input line handling"
     pym.mode.handle_key(key)
@@ -335,34 +330,34 @@ pym.loop = urwid.MainLoop(layout, palette, unhandled_input=do_input)
 pym.bdisp = bdisp
 
 C16_MAP = {
-        (0x0,0x0,0x0): "black",
-        (0xb,0x0,0x0): "dark red",
-        (0x0,0xb,0x0): "dark green",
-        (0xb,0xb,0x0): "brown",
-        (0x0,0x0,0xb): "dark blue",
-        (0xb,0x0,0xb): "dark magenta",
-        (0x0,0xb,0xb): "dark cyan",
-        (0xd,0xd,0xd): "light gray",
-        (0xb,0xb,0xb): "dark gray",
-        (0xf,0x0,0x0): "light red",
-        (0x0,0xf,0x0): "light green",
-        (0xf,0xf,0x0): "yellow",
-        (0x0,0x0,0xf): "light blue",
-        (0xf,0x0,0xf): "light magenta",
-        (0x0,0xf,0xf): "light cyan",
-        (0xf,0xf,0xf): "white",
-        }
+    (0x0, 0x0, 0x0): "black",
+    (0xb, 0x0, 0x0): "dark red",
+    (0x0, 0xb, 0x0): "dark green",
+    (0xb, 0xb, 0x0): "brown",
+    (0x0, 0x0, 0xb): "dark blue",
+    (0xb, 0x0, 0xb): "dark magenta",
+    (0x0, 0xb, 0xb): "dark cyan",
+    (0xd, 0xd, 0xd): "light gray",
+    (0xb, 0xb, 0xb): "dark gray",
+    (0xf, 0x0, 0x0): "light red",
+    (0x0, 0xf, 0x0): "light green",
+    (0xf, 0xf, 0x0): "yellow",
+    (0x0, 0x0, 0xf): "light blue",
+    (0xf, 0x0, 0xf): "light magenta",
+    (0x0, 0xf, 0xf): "light cyan",
+    (0xf, 0xf, 0xf): "white",
+}
 
 C16B_MAP = {
-        (0x0,0x0,0x0): "black",
-        (0xb,0x0,0x0): "dark red",
-        (0x0,0xb,0x0): "dark green",
-        (0xb,0xb,0x0): "brown",
-        (0x0,0x0,0xb): "dark blue",
-        (0xb,0x0,0xb): "dark magenta",
-        (0x0,0xb,0xb): "dark cyan",
-        (0xd,0xd,0xd): "light gray",
-        }
+    (0x0, 0x0, 0x0): "black",
+    (0xb, 0x0, 0x0): "dark red",
+    (0x0, 0xb, 0x0): "dark green",
+    (0xb, 0xb, 0x0): "brown",
+    (0x0, 0x0, 0xb): "dark blue",
+    (0xb, 0x0, 0xb): "dark magenta",
+    (0x0, 0xb, 0xb): "dark cyan",
+    (0xd, 0xd, 0xd): "light gray",
+}
 
 def nearest_88(color):
     "Convert a color value to 88-color"
@@ -468,8 +463,8 @@ def urwid_text_color(pym_color):
         g256 = nearest_256(g)
         b256 = nearest_256(b)
 
-        foreground_88 = hex_color(r88,g88,b88)
-        foreground_256 = hex_color(r256,g256,b256)
+        foreground_88 = hex_color(r88, g88, b88)
+        foreground_256 = hex_color(r256, g256, b256)
         foreground = nearest_list(r, g, b, C16_MAP)
 
     if bg_start != None:
@@ -481,15 +476,15 @@ def urwid_text_color(pym_color):
         g256 = nearest_256(g)
         b256 = nearest_256(b)
 
-        background_88 = hex_color(r88,g88,b88)
-        background_256 = hex_color(r256,g256,b256)
+        background_88 = hex_color(r88, g88, b88)
+        background_256 = hex_color(r256, g256, b256)
         background = nearest_list(r, g, b, C16B_MAP)
 
     entry_name = 'p' + str(NEW_ENTRIES)
     NEW_ENTRIES += 1
 
     pym.loop.screen.register_palette_entry(entry_name, foreground, background,
-            None, foreground_256, background_256)
+        None, foreground_256, background_256)
     return entry_name
 
 def run():

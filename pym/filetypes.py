@@ -17,12 +17,20 @@
 
 # pylint: disable=too-few-public-methods
 
+"""
+File type support
+"""
+
 import ast
-from pym import pym
-from pym.buf import Region
 
 class FileType(object):
+    """
+    A file type
+    """
     def load(self, buf):
+        """
+        Action to perform when we load a file of this type
+        """
         pass
 
 MIME_DICT = {}
@@ -30,16 +38,27 @@ MIME_DICT = {}
 plain_text = FileType()
 
 class PythonFileType(FileType):
+    """
+    File type for python sources
+    """
+
     def load(self, buf):
+        """
+        Build an AST and set up syntax hilighting
+        """
         self.ast = ast.parse(buf.dump_text())
         for node in ast.walk(self.ast):
             if isinstance(node, ast.FunctionDef):
-                buf.add_region(Region(None, 'keyword', (node.lineno - 1,
-                    node.col_offset), (node.lineno, node.col_offset)))
+                buf.add_region(Region(None, 'keyword',
+                    (node.lineno - 1, node.col_offset),
+                    (node.lineno, node.col_offset)))
 
 MIME_DICT['text/x-python'] = PythonFileType()
 
 def file_type_for_mime(mime):
+    """
+    Get the file type object for a given mime type
+    """
     if mime in MIME_DICT:
         return MIME_DICT[mime]
 

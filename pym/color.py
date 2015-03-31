@@ -15,6 +15,17 @@
 # You should have received a copy of the GNU General Public License along with
 # PyM.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Tools to manipulate a text color string.
+
+Text color strings are of the form '#hhh' or '#hhh|hhh' where 'h' is a hex
+digit. You get one hex digit per red/green/blue value. In the second form,
+the second cluster of hex digits refers to the background color for the text.
+
+To specify text should use the default color, you may replace either
+cluster of hex digits with 'x'.
+"""
+
 import re
 
 COLOR_MAP = {}
@@ -25,13 +36,6 @@ def resolve_text_color(text_color):
     """
     Canonicalize a text color string, or resolve a color name into a text color
     string if appropriate.
-    
-    Text color strings are of the form '#hhh' or '#hhh|hhh' where 'h' is a hex
-    digit. You get one hex digit per red/green/blue value. In the second form,
-    the second cluster of hex digits refers to the background color for the text.
-
-    To specify text should use the default color, you may replace either
-    cluster of hex digits with 'x'.
     """
     if text_color[0] != '#':
         if text_color in COLOR_MAP:

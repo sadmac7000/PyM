@@ -55,6 +55,9 @@ def motion(key):
 
 @motionGroup.add('#?(n|N)')
 def search_motion(keys):
+    """
+    Move to next search item
+    """
     times = keys[0]
     backward = keys[1] == 'N'
 
