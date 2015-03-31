@@ -324,6 +324,11 @@ class Buffer(object):
         if os.path.samefile(path, self.path):
             self.dirty = False
 
+        if do_mime:
+            mimetype = magic.from_file(self.path, mime=True).decode("utf-8")
+            self.file_type = file_type_for_mime(mimetype)
+            self.file_type.load(self)
+
     def mode_changed(self, old_mode):
         """
         Notify this buffer of a mode change. Some of its state (i.e. the cursor
