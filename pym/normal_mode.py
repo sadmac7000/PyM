@@ -140,7 +140,7 @@ def normal_mode_to_search_mode(_):
 @normal.handle('<?>')
 def normal_mode_to_back_search_mode(_):
     """
-    Key press handler for `:` in normal mode
+    Key press handler for `?` in normal mode
     """
     sline = pym.sline
     sline.buf = '?'
