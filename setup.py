@@ -22,7 +22,7 @@ setup(
     version = "0.0.1",
     packages = find_packages(),
 
-    install_requires = ['urwid>=1.2.0', 'python-magic'],
+    install_requires = ['urwid>=1.2.0', 'python-magic', 'Pygments'],
 
     # metadata for upload to PyPI
     description = "A Vi-like editor written in python",

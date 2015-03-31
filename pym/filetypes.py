@@ -23,6 +23,8 @@ File type support
 
 import ast
 from pym.buf import Region
+from pygments.lexers import PythonLexer
+from pygments import token
 
 class FileType(object):
     """
@@ -47,12 +49,40 @@ class PythonFileType(FileType):
         """
         Build an AST and set up syntax hilighting
         """
-        self.ast = ast.parse(buf.dump_text())
-        for node in ast.walk(self.ast):
-            if isinstance(node, ast.FunctionDef):
-                buf.add_region(Region(None, 'keyword',
-                    (node.lineno - 1, node.col_offset),
-                    (node.lineno, node.col_offset)))
+        tokens = PythonLexer().get_tokens_unprocessed(buf.dump_text())
+
+        for t in tokens:
+            pos = buf.index_to_line_col(t[0])
+            end_line = pos[0]
+            end_col = pos[1]
+            i = 0
+
+            while i < len(t[2]):
+                if t[2][i] == '\n':
+                    end_line += 1
+                    end_col = 0
+                else:
+                    end_col += 1
+                i += 1
+
+            end = (end_line, end_col)
+
+            if t[1] in token.Comment:
+                buf.add_region(Region(None, 'comment', pos, end))
+            elif t[1] in token.String.Escape:
+                buf.add_region(Region(None, 'string_literal_esc', pos, end))
+            elif t[1] in token.String:
+                buf.add_region(Region(None, 'string_literal', pos, end))
+            elif t[1] in token.Literal:
+                buf.add_region(Region(None, 'literal', pos, end))
+            elif t[1] in token.Keyword:
+                buf.add_region(Region(None, 'keyword', pos, end))
+            elif t[1] in token.Name.Decorator:
+                buf.add_region(Region(None, 'function_name', pos, end))
+            elif t[1] in token.Name.Class:
+                buf.add_region(Region(None, 'class_name', pos, end))
+            elif t[1] in token.Name.Function:
+                buf.add_region(Region(None, 'function_name', pos, end))
 
 MIME_DICT['text/x-python'] = PythonFileType()
 

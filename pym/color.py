@@ -65,5 +65,11 @@ def color_alias(name, color):
 
     COLOR_MAP[name] = color
 
-COLOR_MAP['keyword'] = '#b0b'
 COLOR_MAP['hilight'] = '#000|ff0'
+COLOR_MAP['comment'] = '#79d'
+COLOR_MAP['literal'] = '#d00'
+COLOR_MAP['string_literal'] = '#d00'
+COLOR_MAP['string_literal_esc'] = '#747'
+COLOR_MAP['keyword'] = '#bb0'
+COLOR_MAP['class_name'] = '#0bb'
+COLOR_MAP['function_name'] = '#0bb'

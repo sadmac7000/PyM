@@ -195,6 +195,20 @@ class Buffer(object):
 
         self.markers = {}
 
+    def index_to_line_col(self, index):
+        """
+        Turn a character index to a line-column tuple
+        """
+
+        line = 0
+
+        while index > len(self.lines[line]):
+            index -= len(self.lines[line])
+            index -= 1
+            line += 1
+
+        return (line, index)
+
     def add_region(self, reg):
         """
         Add a region to the buffer
