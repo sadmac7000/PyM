@@ -51,8 +51,18 @@ class PythonFileType(FileType):
         """
         tokens = PythonLexer().get_tokens_unprocessed(buf.dump_text())
 
+        index = 0
+        line = 0
+        col = 0
+
         for t in tokens:
-            pos = buf.index_to_line_col(t[0])
+            col += t[0] - index
+            index = t[0]
+            while col > len(buf.lines[line]):
+                col -= 1
+                col -= len(buf.lines[line])
+                line += 1
+            pos = (line, col)
             end_line = pos[0]
             end_col = pos[1]
             i = 0
