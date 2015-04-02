@@ -457,8 +457,12 @@ class Buffer(object):
         """
         lines_added = end[0] - start[0]
         cols_added = end[1] - start[1]
+        update = []
 
         for reg in self.regions:
+            old_start = reg.start
+            old_end = reg.end
+
             newcol = reg.end[1]
             if reg.end > start:
                 if reg.end[0] == start[0]:
@@ -470,6 +474,11 @@ class Buffer(object):
                 if reg.start[0] == start[0]:
                     newcol += cols_added
                 reg.start = (reg.start[0] + lines_added, newcol)
+
+            if old_start != reg.start or old_end != reg.end:
+                update.append(reg)
+
+        self.update_regions(update)
 
     def forward_search(self, start_pos=None):
         """
@@ -592,7 +601,11 @@ class Buffer(object):
         """
         Collapse regions that were surrounding deleted text
         """
+        update = []
         for reg in self.regions:
+            old_start = reg.start
+            old_end = reg.end
+
             if reg.start >= end:
                 newcol = reg.start[1]
                 if reg.start[0] == end[0]:
@@ -612,6 +625,28 @@ class Buffer(object):
                 reg.end = (reg.end[0] - end[0] + start[0], newcol)
             elif reg.end >= start:
                 reg.end = start
+
+            if old_start != reg.start or old_end != reg.end:
+                update.append(reg)
+
+        self.update_regions(update)
+
+    def update_regions(self, regions):
+        """
+        Call the update handler for all regions in a list
+        """
+
+        by_handler = {}
+
+        for reg in regions:
+            if reg.update == None:
+                continue
+            if not reg.update in by_handler:
+                by_handler[reg.update] = []
+            by_handler[reg.update].append(reg)
+
+        for h in by_handler:
+            h(self, *by_handler[h])
 
     def insert(self, data, row=None, col=None):
         """
