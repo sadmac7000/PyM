@@ -272,6 +272,7 @@ class Buffer(object):
 
         new_lines = []
 
+        mimetype = 'text/plain'
         try:
             with open(self.path, 'r') as f:
                 for line in f.readlines():
