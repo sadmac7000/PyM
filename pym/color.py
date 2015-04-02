@@ -37,6 +37,9 @@ def resolve_text_color(text_color):
     Canonicalize a text color string, or resolve a color name into a text color
     string if appropriate.
     """
+    if text_color == None or len(text_color) == 0:
+        return '#x|x'
+
     if text_color[0] != '#':
         if text_color in COLOR_MAP:
             return COLOR_MAP[text_color]
