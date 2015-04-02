@@ -193,16 +193,13 @@ class Buffer(object):
         """
         Add a region to the buffer
         """
-        inserted = False
 
         for i, other in enumerate(self.regions):
             if other.start >= reg.start:
                 self.regions.insert(i, reg)
-                inserted = True
-                break
+                return
 
-        if not inserted:
-            self.regions.append(reg)
+        self.regions.append(reg)
 
     def headline(self):
         """
