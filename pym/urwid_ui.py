@@ -490,14 +490,14 @@ def urwid_text_color(pym_color):
 
 def run():
     """
-    Main looop for the Urwid UI
+    Main loop for the Urwid UI
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("in_file", nargs='?', default=None, help="File to edit")
     args = parser.parse_args()
 
     pym.loop.screen.set_terminal_properties(colors=256)
-    
+
     from pym.commands import editcmd
     if args.in_file is not None:
         editcmd(args.in_file)
