@@ -308,11 +308,14 @@ class Buffer(object):
         self.dirty = False
         self.file_type.load(self)
 
-    def dump_text(self):
+    def dump_text(self, line_start=0, line_end=None):
         """
         Dump the text of this buffer
         """
-        return "\n".join(self.lines)+"\n"
+        if line_end == None:
+            return "\n".join(self.lines[line_start:])+"\n"
+        else:
+            return "\n".join(self.lines[line_start:line_end])+"\n"
 
     def write_file(self, path=None):
         """
