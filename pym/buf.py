@@ -160,17 +160,11 @@ class Region(object):
     folding.
     """
 
-    def __init__(self, update_cb, tag, start, end):
-        self.update_cb = update_cb
+    def __init__(self, update, tag, start, end):
+        self.update = update
         self.tag = tag
         self.start = start
         self.end = end
-
-    def update(self):
-        "Notify our creator of an update"
-        if self.update_cb == None:
-            return True
-        return self.update_cb()
 
 from .filetypes import plain_text, file_type_for_mime
 class Buffer(object):
